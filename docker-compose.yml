@@ -1,0 +1,34 @@
+services:
+  superset:
+    image: apache/superset:latest
+    container_name: superset
+    ports:
+      - "8088:8088"
+    environment:
+      SUPERSET_ENV: development
+      SUPERSET_LOAD_EXAMPLES: "yes"
+      SUPERSET_ADMIN_USERNAME: admin
+      SUPERSET_ADMIN_PASSWORD: admin
+      SUPERSET_ADMIN_FIRST_NAME: Admin
+      SUPERSET_ADMIN_LAST_NAME: User
+      SUPERSET_ADMIN_EMAIL: admin@example.com
+      SUPERSET_WEBSERVER_PREFIX: /dash
+    volumes:
+      - ./volumes/superset:/app/superset_home
+      - ./superset_config.py:/app/pythonpath/superset_config.py
+      - ./init_superset.sh:/app/init_superset.sh
+    command:
+      [
+        "/bin/sh",
+        "-c",
+        "/app/init_superset.sh && superset run -h 0.0.0.0 -p 8088 --with-threads --reload --debugger",
+      ]
+
+  postgres:
+    image: postgres:12
+    environment:
+      POSTGRES_DB: superset
+      POSTGRES_USER: superset
+      POSTGRES_PASSWORD: superset
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
