@@ -23,8 +23,8 @@ This project provides a complete data stack including:
 ### 1. Clone and Setup
 
 ```bash
-git clone <your-repo-url>
-cd my-superset
+git clone https://github.com/JawadRafique/superset-with-docker-setup.git
+cd superset-with-docker-setup
 ```
 
 ### 2. Start Services
