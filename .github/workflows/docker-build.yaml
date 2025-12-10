@@ -1,0 +1,20 @@
+name: Build and Publish to Docker Hub
+on:
+  [workflow_dispatch]
+
+jobs: 
+  publish-images:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Superset Docker Image
+        run: docker build . -t jawad-superset:latest
+
+      - name: Push to Docker Hub
+        run: |
+          docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          docker tag jawad-superset:latest ${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:latest
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:latest
