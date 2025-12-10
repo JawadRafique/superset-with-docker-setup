@@ -6,7 +6,9 @@ USER root
 # Install ClickHouse drivers using uv into the virtual environment
 RUN . /app/.venv/bin/activate && \
     uv pip install \
-    clickhouse-connect>=0.5.14
+    clickhouse-connect>=0.5.14 \
+    pymysql>=1.0.2 \
+    mysqlclient>=2.1.0
 
 # Switch back to superset user
 USER superset
