@@ -1,10 +1,16 @@
 name: Build and Publish to Docker Hub
 on:
-  [workflow_dispatch]
+  push:
+    branches:
+      - main
+    paths:
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+      - '.github/workflows/docker-build.yaml'
 
 jobs: 
   publish-images:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest 
 
     steps:
       - name: Checkout repository
