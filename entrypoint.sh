@@ -28,7 +28,7 @@ wait_for_database() {
         # Wait up to 60 seconds for MySQL
         for i in {1..12}; do
             if python -c "
-import pymysql
+import MySQLdb
 import os
 try:
     url = os.environ.get('DATABASE_URL', '')
@@ -39,7 +39,7 @@ try:
         if match:
             user, password, host, port, database = match.groups()
             port = int(port) if port else 3306
-            conn = pymysql.connect(host=host, port=port, user=user, password=password, database=database)
+            conn = MySQLdb.connect(host=host, port=port, user=user, passwd=password, db=database)
             conn.close()
             print('Database connection successful!')
         else:
