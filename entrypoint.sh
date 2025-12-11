@@ -22,12 +22,56 @@ DATABASE_URL=${DATABASE_URL:-}
 wait_for_database() {
     echo -e "${YELLOW}⏳ Waiting for database to be ready...${NC}"
     
-    # Extract database type from DATABASE_URL
-    if [[ $DATABASE_URL == mysql* ]]; then
-        echo -e "${BLUE}📊 Detected MySQL database${NC}"
-        # Wait up to 60 seconds for MySQL
+    # Check if using individual database config or DATABASE_URL
+    if [[ -n "$DB_HOST" && -n "$DB_USERNAME" && -n "$DB_PASSWORD" && -n "$DB_DATABASE" ]]; then
+        echo -e "${BLUE}📊 Using individual database configuration${NC}"
+        DB_TYPE=${DB_TYPE:-mysql}
+        DB_PORT=${DB_PORT:-3306}
+        
+        # Wait up to 60 seconds for database
         for i in {1..12}; do
             if python -c "
+import MySQLdb
+import os
+try:
+    db_type = os.environ.get('DB_TYPE', 'mysql')
+    if 'mysql' in db_type.lower():
+        host = os.environ.get('DB_HOST')
+        port = int(os.environ.get('DB_PORT', 3306))
+        user = os.environ.get('DB_USERNAME')
+        password = os.environ.get('DB_PASSWORD')
+        database = os.environ.get('DB_DATABASE')
+        
+        conn = MySQLdb.connect(host=host, port=port, user=user, passwd=password, db=database)
+        conn.close()
+        print('Database connection successful!')
+    else:
+        raise Exception(f'Unsupported database type: {db_type}')
+except Exception as e:
+    print(f'Database connection failed: {e}')
+    exit(1)
+"; then
+                echo -e "${GREEN}✅ Database is ready!${NC}"
+                
+                # Construct DATABASE_URL for Superset
+                export DATABASE_URL="mysql+mysqlclient://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}"
+                echo -e "${BLUE}🔗 Constructed DATABASE_URL for Superset${NC}"
+                return 0
+            fi
+            echo -e "${YELLOW}⏳ Database not ready yet, waiting... (attempt $i/12)${NC}"
+            sleep 5
+        done
+        echo -e "${RED}❌ Database failed to become ready after 60 seconds${NC}"
+        exit 1
+        
+    elif [[ -n "$DATABASE_URL" ]]; then
+        echo -e "${BLUE}📊 Using DATABASE_URL configuration${NC}"
+        # Extract database type from DATABASE_URL
+        if [[ $DATABASE_URL == mysql* ]]; then
+            echo -e "${BLUE}📊 Detected MySQL database${NC}"
+            # Wait up to 60 seconds for MySQL
+            for i in {1..12}; do
+                if python -c "
 import MySQLdb
 import os
 try:
@@ -50,17 +94,21 @@ except Exception as e:
     print(f'Database connection failed: {e}')
     exit(1)
 "; then
-                echo -e "${GREEN}✅ Database is ready!${NC}"
-                return 0
-            fi
-            echo -e "${YELLOW}⏳ Database not ready yet, waiting... (attempt $i/12)${NC}"
-            sleep 5
-        done
-        echo -e "${RED}❌ Database failed to become ready after 60 seconds${NC}"
-        exit 1
+                    echo -e "${GREEN}✅ Database is ready!${NC}"
+                    return 0
+                fi
+                echo -e "${YELLOW}⏳ Database not ready yet, waiting... (attempt $i/12)${NC}"
+                sleep 5
+            done
+            echo -e "${RED}❌ Database failed to become ready after 60 seconds${NC}"
+            exit 1
+        else
+            echo -e "${BLUE}📊 Using default database setup${NC}"
+            sleep 10  # Generic wait for other databases
+        fi
     else
-        echo -e "${BLUE}📊 Using default database setup${NC}"
-        sleep 10  # Generic wait for other databases
+        echo -e "${RED}❌ No database configuration found. Please set either DATABASE_URL or individual DB_* variables${NC}"
+        exit 1
     fi
 }
 
