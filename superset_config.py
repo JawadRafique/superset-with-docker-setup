@@ -11,25 +11,20 @@
 # app.after_request(add_headers)
 
 TALISMAN_ENABLED = False
-# ENABLE_CORS = True
 HTTP_HEADERS={"X-Frame-Options":"ALLOWALL"}
 
-# import os
-# from flask_appbuilder.security.manager import AUTH_DB
-# from superset.security import SupersetSecurityManager
+FEATURE_FLAGS = {
+    "EMBEDDED_SUPERSET": True,
+    "ENABLE_TEMPLATE_PROCESSING": True,
+}
 
-
-# # class CustomSecurityManager(SupersetSecurityManager):
-# #     def is_item_public(self, view_name, item):
-# #         return True
-
-# #     def auth_user_oauth(self, userinfo):
-# #         # Implement your token authentication logic here
-# #         token = userinfo.get('token')
-# #         if token == '3DeyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3MTYyMzcyOTd9':
-# #             return self.find_user('admin')
-# #         return None
-FEATURE_FLAGS = {"EMBEDDED_SUPERSET": True}
+# Allow CSS styling in templates
+HTML_SANITIZATION_SCHEMA_EXTENSIONS = {
+    "attributes": {
+        "*": ["style", "className", "id"],
+    },
+    "tagNames": ["style"],
+}
 
 # AUTH_TYPE = AUTH_DB
 # # CUSTOM_SECURITY_MANAGER = CustomSecurityManager
@@ -51,12 +46,6 @@ SECRET_KEY = 'y6PCtXU-R0HXTZXuwehepBPdj3Hg_WXNN7Wu_19yJMQ'
 #     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 #     'Access-Control-Allow-Headers': 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range',
 #     'Access-Control-Expose-Headers': 'Content-Length,Content-Range',
-# }
-
-
-
-# FEATURE_FLAGS = {
-#     "ENABLE_TEMPLATE_PROCESSING": True,
 # }
 
 # # BASE_URL = 'http://localhost/dash'

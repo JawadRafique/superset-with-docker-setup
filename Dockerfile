@@ -10,10 +10,15 @@ RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Install MySQL driver using uv into the virtual environment
+# Install ClickHouse drivers and MySQL driver using uv into the virtual environment
 RUN . /app/.venv/bin/activate && \
     uv pip install \
-    mysqlclient>=2.2.4
+    clickhouse-connect>=0.5.14 \
+    mysqlclient==2.2.4
+
+# Create custom entrypoint script
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 # Switch back to superset user
 USER superset
@@ -21,4 +26,5 @@ USER superset
 # Set the working directory
 WORKDIR /app
 
-CMD ["/app/docker/entrypoints/run-server.sh"]
+# Use custom entrypoint
+CMD ["/app/entrypoint.sh"]
