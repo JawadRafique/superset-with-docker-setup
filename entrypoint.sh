@@ -268,7 +268,10 @@ except Exception as e:
     # Print final database configuration
     echo -e "${GREEN}✅ MySQL credentials verified successfully!${NC}"
     echo -e "${BLUE}🔗 Database: mysql+mysqlclient://${MYSQL_USER}:***@${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DB}${NC}"
-    echo -e "${BLUE}🔗 SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI}${NC}"
+    
+    # Mask password in SQLALCHEMY_DATABASE_URI for logging
+    MASKED_URI=$(echo "${SQLALCHEMY_DATABASE_URI}" | sed -E 's/(:\/\/[^:]+:)[^@]+(@)/\1***\2/')
+    echo -e "${BLUE}🔗 SQLALCHEMY_DATABASE_URI: ${MASKED_URI}${NC}"
     
     # Ensure superset home directory exists
     mkdir -p /app/superset_home
