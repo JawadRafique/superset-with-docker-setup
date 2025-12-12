@@ -1,95 +1,14 @@
 services:
   superset:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: mysuperset:latest
     container_name: jawad-superset
     ports:
       - "8088:8088"
-    environment:
-      SUPERSET_ENV: development
-      SUPERSET_LOAD_EXAMPLES: "yes"
-      SUPERSET_ADMIN_USERNAME: admin
-      SUPERSET_ADMIN_PASSWORD: admin
-      SUPERSET_ADMIN_FIRST_NAME: Admin
-      SUPERSET_ADMIN_LAST_NAME: User
-      SUPERSET_ADMIN_EMAIL: admin@example.com
-      SUPERSET_WEBSERVER_PREFIX: /dash
+    env_file:
+      - .env
     volumes:
       - ./volumes/superset:/app/superset_home
       - ./superset_config.py:/app/pythonpath/superset_config.py
-    networks:
-      - app-tier
-
-  postgres:
-    image: postgres:12
-    environment:
-      POSTGRES_DB: superset
-      POSTGRES_USER: superset
-      POSTGRES_PASSWORD: superset
-    volumes:
-      - ./volumes/postgres:/var/lib/postgresql/data
-
-  # ClickHouse
-  clickhouse:
-    container_name: jawad-clickhouse
-    image: clickhouse/clickhouse-server:latest
-    ports:
-      - "8123:8123" # HTTP interface
-      - "9000:9000" # Native client interface
-    environment:
-      - CLICKHOUSE_DB=jawad
-      - CLICKHOUSE_USER=admin
-      - CLICKHOUSE_PASSWORD=password123
-      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
-    volumes:
-      - ./volumes/clickhouse-data:/var/lib/clickhouse
-      - ./volumes/clickhouse-logs:/var/log/clickhouse-server
-    ulimits:
-      nofile:
-        soft: 262144
-        hard: 262144
-    networks:
-      - app-tier
-
-  # Kafka Service
-  kafka:
-    container_name: jawad-Kafka
-    image: "apache/kafka:latest" # Uses the latest official Apache Kafka image
-    ports:
-      - "9092:9092" # Maps TCP port 9092 on the host to TCP port 9092 on the Kafka container (used internally by Kafka brokers)
-      - "9094:9094" # Maps TCP port 9094 on the host to TCP port 9094 on the Kafka container (used for external clients)
-    environment:
-      - KAFKA_NODE_ID=1 # Sets the node ID for the Kafka broker
-      - KAFKA_PROCESS_ROLES=broker,controller # Assigns roles to the Kafka process as both controller and broker
-      - KAFKA_LISTENERS=PLAINTEXT://kafka:9092,CONTROLLER://kafka:9093,EXTERNAL://0.0.0.0:9094 # Configures the listeners for different protocols
-      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://10.40.110.68:9094 # Sets how the Kafka broker advertises itself to clients
-      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER # Specifies the listener names that are used for the controller
-      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT # Maps listener names to security protocols
-      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093 # Configures the controller quorum voters for the Kafka broker
-      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 # Sets replication factor for offsets topic
-      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1 # Sets replication factor for transaction state log
-      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1 # Sets minimum in-sync replicas for transaction state log
-      - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0 # Sets initial rebalance delay
-      - KAFKA_NUM_PARTITIONS=3 # Sets default number of partitions for new topics
-    networks:
-      - app-tier # Connects the Kafka service to the 'app-tier' network
-
-  # Kafka UI
-  kafka-ui:
-    container_name: jawad-kafka-ui
-    image: provectuslabs/kafka-ui:latest
-    ports:
-      - "8081:8080" # Changed from 8080 to 8081 to avoid conflict with BPMN service
-    environment:
-      DYNAMIC_CONFIG_ENABLED: "true"
-      KAFKA_CLUSTERS_0_NAME: "local-kafka"
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka:9092"
-      KAFKA_CLUSTERS_0_ZOOKEEPER: ""
-    volumes:
-      - /Users/j/jawad/compose-services/configs/config-kafkaui.yaml:/etc/kafkaui/dynamic_config.yaml
-    depends_on:
-      - kafka
     networks:
       - app-tier
 

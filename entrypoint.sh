@@ -114,9 +114,75 @@ except Exception as e:
 
 # Function to check if superset is already initialized
 is_initialized() {
+    # Check if the marker file exists
     if [ -f "/app/superset_home/.superset_initialized" ]; then
+        echo -e "${GREEN}✅ Found initialization marker file${NC}"
+        return 0
+    fi
+    
+    # Also check if Superset tables exist in the database
+    echo -e "${BLUE}🔍 Checking if Superset tables exist in database...${NC}"
+    
+    # Check for key Superset tables in the database
+    if python -c "
+import MySQLdb
+import os
+import sys
+try:
+    # Get database connection info
+    if os.environ.get('DATABASE_URL'):
+        import re
+        url = os.environ.get('DATABASE_URL', '')
+        match = re.match(r'mysql\+?.*://([^:]+):([^@]+)@([^:/]+):?(\d*)/(\w+)', url)
+        if match:
+            user, password, host, port, database = match.groups()
+            port = int(port) if port else 3306
+        else:
+            sys.exit(1)
+    elif all(os.environ.get(key) for key in ['DB_HOST', 'DB_USERNAME', 'DB_PASSWORD', 'DB_DATABASE']):
+        host = os.environ.get('DB_HOST')
+        port = int(os.environ.get('DB_PORT', 3306))
+        user = os.environ.get('DB_USERNAME')
+        password = os.environ.get('DB_PASSWORD')
+        database = os.environ.get('DB_DATABASE')
+    else:
+        print('No database configuration found')
+        sys.exit(1)
+    
+    # Connect and check for Superset tables
+    conn = MySQLdb.connect(host=host, port=port, user=user, passwd=password, db=database)
+    cursor = conn.cursor()
+    
+    # Check for key Superset tables
+    cursor.execute(\"SHOW TABLES LIKE 'ab_user'\")
+    ab_user_exists = cursor.fetchone() is not None
+    
+    cursor.execute(\"SHOW TABLES LIKE 'dashboards'\")
+    dashboards_exists = cursor.fetchone() is not None
+    
+    cursor.execute(\"SHOW TABLES LIKE 'slices'\")
+    slices_exists = cursor.fetchone() is not None
+    
+    cursor.close()
+    conn.close()
+    
+    if ab_user_exists and dashboards_exists and slices_exists:
+        print('Superset tables found in database')
+        sys.exit(0)
+    else:
+        print('Superset tables not found in database')
+        sys.exit(1)
+        
+except Exception as e:
+    print(f'Database check failed: {e}')
+    sys.exit(1)
+"; then
+        echo -e "${GREEN}✅ Superset tables found in database${NC}"
+        # Create marker file if tables exist but marker doesn't
+        touch /app/superset_home/.superset_initialized
         return 0
     else
+        echo -e "${YELLOW}⚠️  Superset tables not found in database${NC}"
         return 1
     fi
 }
@@ -124,6 +190,85 @@ is_initialized() {
 # Function to initialize superset
 initialize_superset() {
     echo -e "${BLUE}🔧 Initializing Superset...${NC}"
+    
+    # FORCE MySQL credential verification before proceeding
+    echo -e "${YELLOW}🔒 Verifying MySQL credentials before initialization...${NC}"
+    
+    # Determine which database configuration to use
+    if [[ -n "$DB_HOST" && -n "$DB_USERNAME" && -n "$DB_PASSWORD" && -n "$DB_DATABASE" ]]; then
+        echo -e "${BLUE}📊 Using individual MySQL configuration${NC}"
+        MYSQL_HOST="$DB_HOST"
+        MYSQL_PORT="${DB_PORT:-3306}"
+        MYSQL_USER="$DB_USERNAME"
+        MYSQL_PASS="$DB_PASSWORD"
+        MYSQL_DB="$DB_DATABASE"
+        
+        # Force set DATABASE_URL for Superset
+        export DATABASE_URL="mysql://${MYSQL_USER}:${MYSQL_PASS}@${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DB}"
+        export SQLALCHEMY_DATABASE_URI="$DATABASE_URL"
+        
+    elif [[ -n "$DATABASE_URL" && "$DATABASE_URL" == mysql* ]]; then
+        echo -e "${BLUE}📊 Using DATABASE_URL MySQL configuration${NC}"
+        # Parse DATABASE_URL to extract components
+        if python -c "
+import os
+import re
+url = os.environ.get('DATABASE_URL', '')
+match = re.match(r'mysql\+?.*://([^:]+):([^@]+)@([^:/]+):?(\d*)/(\w+)', url)
+if match:
+    user, password, host, port, database = match.groups()
+    port = int(port) if port else 3306
+    print(f'MYSQL_HOST={host}')
+    print(f'MYSQL_PORT={port}')
+    print(f'MYSQL_USER={user}')
+    print(f'MYSQL_PASS={password}')
+    print(f'MYSQL_DB={database}')
+else:
+    exit(1)
+" > /tmp/mysql_vars; then
+            source /tmp/mysql_vars
+            rm /tmp/mysql_vars
+            
+            # Force set SQLALCHEMY_DATABASE_URI
+            export SQLALCHEMY_DATABASE_URI="$DATABASE_URL"
+        else
+            echo -e "${RED}❌ Failed to parse DATABASE_URL for MySQL connection${NC}"
+            exit 1
+        fi
+    else
+        echo -e "${RED}❌ No MySQL configuration found!${NC}"
+        echo -e "${RED}❌ Superset REQUIRES MySQL database. SQLite is not allowed.${NC}"
+        echo -e "${RED}❌ Please set either:${NC}"
+        echo -e "${RED}   - DATABASE_URL=mysql+mysqlclient://user:pass@host:port/db${NC}"
+        echo -e "${RED}   - Or: DB_HOST, DB_USERNAME, DB_PASSWORD, DB_DATABASE${NC}"
+        exit 1
+    fi
+    
+    # Test MySQL connection before proceeding
+    echo -e "${YELLOW}🔌 Testing MySQL connection: ${MYSQL_USER}@${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DB}${NC}"
+    if ! python -c "
+import MySQLdb
+import os
+try:
+    conn = MySQLdb.connect(host='${MYSQL_HOST}', port=${MYSQL_PORT}, user='${MYSQL_USER}', passwd='${MYSQL_PASS}', db='${MYSQL_DB}')
+    cursor = conn.cursor()
+    cursor.execute('SELECT VERSION()')
+    version = cursor.fetchone()[0]
+    cursor.close()
+    conn.close()
+    print(f'✅ MySQL connection successful! Version: {version}')
+except Exception as e:
+    print(f'❌ MySQL connection failed: {e}')
+    exit(1)
+"; then
+        echo -e "${RED}❌ MySQL connection test failed! Cannot proceed with initialization.${NC}"
+        exit 1
+    fi
+    
+    # Print final database configuration
+    echo -e "${GREEN}✅ MySQL credentials verified successfully!${NC}"
+    echo -e "${BLUE}🔗 Database: mysql+mysqlclient://${MYSQL_USER}:***@${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DB}${NC}"
+    echo -e "${BLUE}🔗 SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI}${NC}"
     
     # Ensure superset home directory exists
     mkdir -p /app/superset_home
@@ -153,6 +298,56 @@ initialize_superset() {
     
     # Mark as initialized
     touch /app/superset_home/.superset_initialized
+    
+    # Validate initialization by checking created tables
+    echo -e "${BLUE}🔍 Validating initialization...${NC}"
+    if python -c "
+import MySQLdb
+import os
+try:
+    # Get database connection info (same logic as before)
+    if os.environ.get('DATABASE_URL'):
+        import re
+        url = os.environ.get('DATABASE_URL', '')
+        match = re.match(r'mysql\+?.*://([^:]+):([^@]+)@([^:/]+):?(\d*)/(\w+)', url)
+        if match:
+            user, password, host, port, database = match.groups()
+            port = int(port) if port else 3306
+        else:
+            raise Exception('Could not parse DATABASE_URL')
+    else:
+        host = os.environ.get('DB_HOST')
+        port = int(os.environ.get('DB_PORT', 3306))
+        user = os.environ.get('DB_USERNAME')
+        password = os.environ.get('DB_PASSWORD')
+        database = os.environ.get('DB_DATABASE')
+    
+    # Connect and check tables
+    conn = MySQLdb.connect(host=host, port=port, user=user, passwd=password, db=database)
+    cursor = conn.cursor()
+    
+    # Get table count
+    cursor.execute('SHOW TABLES')
+    tables = cursor.fetchall()
+    table_count = len(tables)
+    
+    # Check for admin user
+    cursor.execute('SELECT COUNT(*) FROM ab_user WHERE username = %s', (os.environ.get('SUPERSET_ADMIN_USERNAME', 'admin'),))
+    admin_count = cursor.fetchone()[0]
+    
+    cursor.close()
+    conn.close()
+    
+    print(f'Successfully created {table_count} tables in database: {database}')
+    print(f'Admin user created: {admin_count > 0}')
+    
+except Exception as e:
+    print(f'Validation failed: {e}')
+"; then
+        echo -e "${GREEN}✅ Database initialization validated successfully!${NC}"
+    else
+        echo -e "${YELLOW}⚠️  Could not validate database initialization${NC}"
+    fi
     
     echo -e "${GREEN}✅ Superset initialization complete!${NC}"
 }

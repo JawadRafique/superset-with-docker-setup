@@ -5,10 +5,7 @@ on:
       - main
     paths:
       - 'Dockerfile'
-      - 'docker-compose.yml'
-      - 'superset_config.py'
       - 'entrypoint.sh'
-      - '.github/workflows/docker-build.yaml'
 
 jobs: 
   publish-images:

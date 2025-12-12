@@ -1,3 +1,0 @@
-# Additional Python packages for local Docker development
-# Add ClickHouse support
-clickhouse-connect>=0.6.8
