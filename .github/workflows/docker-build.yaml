@@ -21,7 +21,7 @@ jobs:
         run: echo "VERSION=$(cat version)" >> $GITHUB_OUTPUT
 
       - name: Build Superset Docker Image
-        run: docker build . -t jawad-superset:latest
+        run: docker build --no-cache . -t jawad-superset:latest
 
       - name: Push to Docker Hub
         run: |
