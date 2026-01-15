@@ -1,0 +1,98 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Values.name }}-superset-hpa
+  namespace: {{ .Values.namespace.name }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Values.name }}-superset
+  minReplicas: {{ .Values.deployment.minreplicas }}
+  maxReplicas: {{ .Values.deployment.maxreplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.deployment.cpuutilization }} # Target CPU utilization percentage to trigger scaling
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.deployment.memoryutilization }} # Target memory utilization percentage to trigger scaling
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}-superset
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    app: {{ .Values.name }}-superset
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  revisionHistoryLimit: 0
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}-superset
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}-superset
+    spec:
+      containers:
+      - name: superset
+        image: {{ .Values.superset.image.package }}:{{ .Values.superset.image.tag }}
+        env:
+        # Update these with your MySQL credentials
+        - name: DATABASE_URL
+          value: mysql://{{ .Values.superset.database.username }}:{{ .Values.superset.database.password }}@{{ .Values.superset.database.host }}:{{ .Values.superset.database.port }}/{{ .Values.superset.database.database }}
+
+        # Generate this secret key with openssl rand -base64 42 
+        - name: SUPERSET_SECRET_KEY
+          value: sfyNbqqLVp+O0vbQNEBqbkpF+8V4zglMM1ocOIumc7qvapHvO1cphYuO
+
+        # Superset Admin User Configuration
+        - name: SUPERSET_ADMIN_USERNAME
+          value: admin
+        - name: SUPERSET_ADMIN_PASSWORD
+          value: admin123
+        - name: SUPERSET_ADMIN_FIRST_NAME
+          value: Super
+        - name: SUPERSET_ADMIN_LAST_NAME
+          value: Admin
+        - name: SUPERSET_ADMIN_EMAIL
+          value: admin@yourcompany.com
+
+        # Superset Application Configuration
+        - name: SUPERSET_ENV
+          value: development
+        - name: SUPERSET_LOAD_EXAMPLES
+          value: "no"
+        - name: SUPERSET_WEBSERVER_PREFIX
+          value: /dash
+        
+        ports:
+        - containerPort: {{ .Values.superset.port }}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.name }}-superset-service
+  namespace: {{ .Values.namespace.name }}
+spec:
+  type: NodePort
+  externalTrafficPolicy: Local
+  selector:
+    app: {{ .Values.name }}-superset
+  ports:
+  - name: http
+    port: {{ .Values.superset.port }}
+    targetPort: {{ .Values.superset.port }}

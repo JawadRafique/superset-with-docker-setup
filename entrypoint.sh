@@ -114,13 +114,7 @@ except Exception as e:
 
 # Function to check if superset is already initialized
 is_initialized() {
-    # Check if the marker file exists
-    if [ -f "/app/superset_home/.superset_initialized" ]; then
-        echo -e "${GREEN}✅ Found initialization marker file${NC}"
-        return 0
-    fi
-    
-    # Also check if Superset tables exist in the database
+    # Always check if Superset tables exist in the database first
     echo -e "${BLUE}🔍 Checking if Superset tables exist in database...${NC}"
     
     # Check for key Superset tables in the database
@@ -163,26 +157,49 @@ try:
     cursor.execute(\"SHOW TABLES LIKE 'slices'\")
     slices_exists = cursor.fetchone() is not None
     
+    # Check if ab_user table has actual admin users (check both configured and existing)
+    admin_user_exists = False
+    if ab_user_exists:
+        # First check for the configured admin username
+        admin_username = os.environ.get('SUPERSET_ADMIN_USERNAME', 'admin')
+        cursor.execute(\"SELECT COUNT(*) FROM ab_user WHERE username = %s\", (admin_username,))
+        admin_count = cursor.fetchone()[0]
+        
+        if admin_count == 0:
+            # If configured admin doesn't exist, check for any admin users with Admin role
+            cursor.execute(\"SELECT COUNT(*) FROM ab_user u JOIN ab_user_role ur ON u.id = ur.user_id JOIN ab_role r ON ur.role_id = r.id WHERE r.name = 'Admin'\")
+            existing_admin_count = cursor.fetchone()[0]
+            admin_user_exists = existing_admin_count > 0
+            if admin_user_exists:
+                print(f'Found existing admin user(s) with Admin role, but not with configured username: {admin_username}')
+        else:
+            admin_user_exists = True
+    
     cursor.close()
     conn.close()
     
-    if ab_user_exists and dashboards_exists and slices_exists:
-        print('Superset tables found in database')
+    if ab_user_exists and dashboards_exists and slices_exists and admin_user_exists:
+        print('Superset tables and admin user found in database')
         sys.exit(0)
     else:
-        print('Superset tables not found in database')
+        print(f'Incomplete Superset installation detected:')
+        print(f'  ab_user table: {ab_user_exists}')
+        print(f'  dashboards table: {dashboards_exists}')
+        print(f'  slices table: {slices_exists}')
+        print(f'  admin user: {admin_user_exists}')
+        print('Database requires initialization')
         sys.exit(1)
         
 except Exception as e:
     print(f'Database check failed: {e}')
     sys.exit(1)
 "; then
-        echo -e "${GREEN}✅ Superset tables found in database${NC}"
-        # Create marker file if tables exist but marker doesn't
-        touch /app/superset_home/.superset_initialized
+        echo -e "${GREEN}✅ Superset tables and admin user found in database${NC}"
         return 0
     else
-        echo -e "${YELLOW}⚠️  Superset tables not found in database${NC}"
+        echo -e "${YELLOW}⚠️  Database requires initialization or is incomplete${NC}"
+        # Remove stale marker file if it exists
+        rm -f /app/superset_home/.superset_initialized
         return 1
     fi
 }

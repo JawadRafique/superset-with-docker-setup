@@ -6,6 +6,7 @@ on:
     paths:
       - 'Dockerfile'
       - 'entrypoint.sh'
+      - 'version'
 
 jobs: 
   publish-images:
@@ -15,11 +16,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Read version from file
+        id: version
+        run: echo "VERSION=$(cat version)" >> $GITHUB_OUTPUT
+
       - name: Build Superset Docker Image
         run: docker build . -t jawad-superset:latest
 
       - name: Push to Docker Hub
         run: |
           docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          # Tag and push latest
           docker tag jawad-superset:latest ${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:latest
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:latest
+          # Tag and push version
+          docker tag jawad-superset:latest ${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:${{ steps.version.outputs.VERSION }}
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:${{ steps.version.outputs.VERSION }}

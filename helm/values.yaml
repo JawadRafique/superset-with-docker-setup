@@ -1,0 +1,34 @@
+# Default values for Superset Helm chart
+# This is a YAML-formatted file.
+
+# Application name
+name: Application Name
+
+# Namespace configuration
+namespace:
+  name: superset
+
+# Deployment configuration
+deployment:
+  minreplicas: 1
+  maxreplicas: 3
+  cpuutilization: 70
+  memoryutilization: 80
+
+# Superset application configuration
+superset:
+  # Docker image configuration
+  image:
+    package: jawad-superset
+    tag: "1.1.0"
+  
+  # Application port
+  port: 8088
+  
+  # Database configuration
+  database:
+    host: host
+    port: 3306
+    database: database
+    username: username
+    password: "your-password-here"
