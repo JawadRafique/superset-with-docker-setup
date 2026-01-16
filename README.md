@@ -171,11 +171,13 @@ docker-compose logs superset | grep -i saml
 ├── superset_config.py             # Configuration with SAML integration
 ├── auth_saml.py                   # Custom SAML security manager (v1.2.0)
 ├── templates/                     # Custom templates for dual authentication
-│   ├── appbuilder/general/security/
-│   │   └── login_db.html         # Dual authentication login page
-│   ├── card/
-│   └── handlebars/
+│   └── appbuilder/general/security/
+│       └── login_db.html         # Dual authentication login page
+├── helm/                          # Kubernetes deployment (v1.2.0)
+│   ├── microservice-superset.yaml # Helm template with SAML support
+│   └── values.yaml               # Configuration values
 ├── .env.example                   # Environment variables template  
+├── .env                           # Your local configuration (git-ignored)
 ├── version                        # Version 1.2.0
 ├── volumes/                       # Persistent data storage
 │   └── superset/                  # Superset application data
@@ -395,11 +397,29 @@ docker-compose up -d
 
 ## 📄 License
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+This project is **free to use** and licensed under the **MIT License**.
+
+✅ **Free for personal and commercial use**  
+✅ **No restrictions on modification and distribution**  
+✅ **Open source and community-driven**
+
+## 👨‍💻 Author
+
+**Muhammad Jawad**  
+🌐 **Portfolio**: [https://ijawadrafique.com/](https://ijawadrafique.com/)  
+☕ **Support**: [Buy me a coffee](http://buymeacoffee.com/m.jawad)
 
 ## 🤝 Contributing  
 
 Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+### 💖 Support the Project
+
+If this project helped you, consider supporting its development:
+
+[![Buy Me A Coffee](https://img.shields.io/badge/☕-Buy%20me%20a%20coffee-yellow.svg)](http://buymeacoffee.com/m.jawad)
+
+Your support helps maintain and improve this project!
 
 ---
 
