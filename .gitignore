@@ -188,3 +188,6 @@ components/
 *.pem
 *.key
 *.cer
+
+# Readme files
+DOCKER_HUB_README.md

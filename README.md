@@ -2,6 +2,11 @@
 
 **Version 1.2.0** - Enhanced Apache Superset setup with dual authentication support (SAML + Database) and complete enterprise integration.
 
+![Docker Pulls](https://img.shields.io/docker/pulls/jawadrafique/jawad-superset?style=flat-square)
+![Docker Image Version](https://img.shields.io/docker/v/jawadrafique/jawad-superset/latest?style=flat-square)
+![Docker Image Size](https://img.shields.io/docker/image-size/jawadrafique/jawad-superset/latest?style=flat-square)
+![GitHub](https://img.shields.io/github/license/jawadrafique/superset-with-docker-setup?style=flat-square)
+
 ## ✨ Features (v1.2.0)
 
 ### 🔐 Dual Authentication System
