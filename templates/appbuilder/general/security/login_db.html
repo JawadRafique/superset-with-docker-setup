@@ -1,0 +1,105 @@
+{% extends "appbuilder/base.html" %}
+{% block content %}
+<div class="container">
+    <div id="loginbox" style="margin-top: 50px" class="mainbox col-md-6 col-md-offset-3 col-sm-8 col-sm-offset-2">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <div class="panel-title">{{ title }}</div>
+            </div>
+            <div style="padding-top: 30px" class="panel-body">
+                
+                <!-- SAML SSO Section -->
+                {% if saml_enabled %}
+                <div style="margin-bottom: 20px">
+                    <h5>{{ _('Sign in with your organization account') }}</h5>
+                    <a id="btn-signin-saml" 
+                       href="/login/?saml=true" 
+                       class="btn btn-primary btn-block" 
+                       type="submit" 
+                       style="margin-bottom: 10px">
+                        {{ _('Sign In with Azure AD') }}
+                        <i class="fa fa-windows fa-1x" style="margin-left: 8px;"></i>
+                    </a>
+                    
+                    <div style="text-align: center; margin: 20px 0">
+                        <span style="color: #666">{{ _('or') }}</span>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Database Login Form Section -->
+                <div>
+                    <h5>{{ _('Sign in with username and password') }}</h5>
+                    <form class="form" action="" method="post" name="login">
+                        {{ form.hidden_tag() }}
+
+                        <!-- Username Input -->
+                        <div class="control-group{% if form.errors.username is defined %} error{% endif %}">
+                            <label class="control-label" for="username">{{ _("Username") }}:</label>
+                            <div class="controls">
+                                <div class="input-group">
+                                    <span class="input-group-addon"><i class="fa fa-user"></i></span>
+                                    {{ form.username(size=80, class="form-control", autofocus=true) }}
+                                </div>
+                                {% for error in form.errors.get('username', []) %}
+                                <span class="help-inline">[{{ error }}]</span><br />
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Password Input -->
+                        <div class="control-group{% if form.errors.password is defined %} error{% endif %}">
+                            <label class="control-label" for="password">{{ _("Password") }}:</label>
+                            <div class="controls">
+                                <div class="input-group">
+                                    <span class="input-group-addon"><i class="fa fa-key"></i></span>
+                                    {{ form.password(size=80, class="form-control") }}
+                                </div>
+                                {% for error in form.errors.get('password', []) %}
+                                <span class="help-inline">[{{ error }}]</span><br />
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Remember Me Checkbox -->
+                        {% if form.remember_me %}
+                        <div class="control-group">
+                            <div class="controls">
+                                <label class="checkbox">
+                                    {{ form.remember_me() }} {{ _("Remember me") }}
+                                </label>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Login Button -->
+                        <div class="control-group">
+                            <div class="controls">
+                                <button type="submit" class="btn btn-success btn-block">
+                                    {{ _("Sign In") }}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Registration Link -->
+                {% if appbuilder.sm.auth_user_registration %}
+                <div style="margin-top: 20px; text-align: center">
+                    <a href="{{ appbuilder.get_url_for_userregistration }}">
+                        {{ _("Don't have an account? Register here") }}
+                    </a>
+                </div>
+                {% endif %}
+
+                <!-- Status Information -->
+                <div style="margin-top: 20px; text-align: center">
+                    <small class="text-muted">
+                        SAML Authentication: {{ "Enabled" if saml_enabled else "Disabled" }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

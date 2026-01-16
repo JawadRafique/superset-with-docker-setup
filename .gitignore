@@ -178,6 +178,13 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+.env.oauth
 
 # templates
-templates/
+components/
+
+# Certificates
+*.crt
+*.pem
+*.key
+*.cer

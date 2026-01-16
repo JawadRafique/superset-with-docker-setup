@@ -7,6 +7,38 @@ data:
   superset_config.py: |
     import os
 
+    # Check if SAML is enabled before importing SAML components
+    ENABLE_SAML_AUTH = os.environ.get('ENABLE_SAML_AUTH', 'false').lower() == 'true'
+
+    # Conditionally import and configure SAML
+    if ENABLE_SAML_AUTH:
+        from auth_saml import SamlSecurityManager
+        # Enable SAML authentication with database fallback
+        CUSTOM_SECURITY_MANAGER = SamlSecurityManager
+        
+        # Add custom template directory
+        import jinja2
+        FAB_TEMPLATE_LOADER = jinja2.ChoiceLoader([
+            jinja2.FileSystemLoader('/app/pythonpath/templates'),
+            jinja2.FileSystemLoader('/app/superset/templates')
+        ])
+
+    AUTH_TYPE = 1  # AUTH_DB (allows both database and SAML auth)
+    AUTH_USER_REGISTRATION = True
+
+    # Configure default role for SAML users from environment
+    SAML_DEFAULT_ROLE = os.environ.get('SAML_DEFAULT_ROLE', 'Gamma')
+    AUTH_USER_REGISTRATION_ROLE = SAML_DEFAULT_ROLE
+
+    # Allow both SAML and database authentication
+    AUTH_ROLES_SYNC_AT_LOGIN = True  # Sync roles at login
+    AUTH_ROLES_MAPPING = {
+        "Gamma": ["Gamma"],
+        "Alpha": ["Alpha"], 
+        "Admin": ["Admin"]
+    }
+
+    # Security settings
     TALISMAN_ENABLED = False
     HTTP_HEADERS={"X-Frame-Options":"ALLOWALL"}
 
@@ -101,31 +133,67 @@ spec:
         env:
         # Database configuration
         - name: DATABASE_URL
-          value: mysql://{{ .Values.superset.database.username }}:{{ .Values.superset.database.password }}@{{ .Values.superset.database.host }}:{{ .Values.superset.database.port }}/{{ .Values.superset.database.database }}
+          value: mysql://{{ .Values.superset.db.username }}:{{ .Values.superset.db.password }}@{{ .Values.superset.db.host }}:{{ .Values.superset.db.port }}/{{ .Values.superset.db.database }}
 
         # Secret key for session management -> generated via: openssl rand -base64 42
         - name: SECRET_KEY
-          value: nalhZ0gUyMHqfdPxpnL4z1cLGmCC2yZu1tgGECSUMIAxDOFiPD1J5eft
+          value: "{{ .Values.superset.secretKey }}"
 
         # Superset Admin User Configuration
         - name: SUPERSET_ADMIN_USERNAME
-          value: admin
+          value: "{{ .Values.superset.admin.username }}"
         - name: SUPERSET_ADMIN_PASSWORD
-          value: admin123
+          value: "{{ .Values.superset.admin.password }}"
         - name: SUPERSET_ADMIN_FIRST_NAME
-          value: Super
+          value: "{{ .Values.superset.admin.firstName }}"
         - name: SUPERSET_ADMIN_LAST_NAME
-          value: Admin
+          value: "{{ .Values.superset.admin.lastName }}"
         - name: SUPERSET_ADMIN_EMAIL
-          value: admin@yourcompany.com
+          value: "{{ .Values.superset.admin.email }}"
 
         # Superset Application Configuration
         - name: SUPERSET_ENV
-          value: development
+          value: "{{ .Values.superset.env }}"
         - name: SUPERSET_LOAD_EXAMPLES
-          value: "no"
+          value: "{{ .Values.superset.loadExamples }}"
         - name: SUPERSET_WEBSERVER_PREFIX
-          value: /dash
+          value: "{{ .Values.superset.webserverPrefix }}"
+
+        # =============================================================================
+        # SAML Authentication Configuration (v1.2.0+)
+        # =============================================================================
+        - name: ENABLE_SAML_AUTH
+          value: "{{ .Values.superset.saml.enabled }}"
+        - name: SAML_DEFAULT_ROLE
+          value: "{{ .Values.superset.saml.defaultRole }}"
+        - name: SAML_STRICT
+          value: "{{ .Values.superset.saml.strict }}"
+        - name: SAML_DEBUG
+          value: "{{ .Values.superset.saml.debug }}"
+
+        # Service Provider Configuration
+        - name: SAML_SP_ENTITY_ID
+          value: "{{ .Values.superset.saml.sp.entityId }}"
+        - name: SAML_SP_ACS_URL
+          value: "{{ .Values.superset.saml.sp.acsUrl }}"
+        - name: SAML_SP_SLS_URL
+          value: "{{ .Values.superset.saml.sp.slsUrl }}"
+        - name: SAML_SP_NAMEID_FORMAT
+          value: "{{ .Values.superset.saml.sp.nameIdFormat }}"
+        - name: SAML_SP_X509_CERT
+          value: "{{ .Values.superset.saml.sp.x509Cert }}"
+        - name: SAML_SP_PRIVATE_KEY
+          value: "{{ .Values.superset.saml.sp.privateKey }}"
+
+        # Identity Provider Configuration
+        - name: SAML_IDP_ENTITY_ID
+          value: "{{ .Values.superset.saml.idp.entityId }}"
+        - name: SAML_IDP_SSO_URL
+          value: "{{ .Values.superset.saml.idp.ssoUrl }}"
+        - name: SAML_IDP_SLS_URL
+          value: "{{ .Values.superset.saml.idp.slsUrl }}"
+        - name: SAML_IDP_X509_CERT
+          value: "{{ .Values.superset.saml.idp.x509Cert }}"
         
         volumeMounts:
         - mountPath: /app/pythonpath/superset_config.py

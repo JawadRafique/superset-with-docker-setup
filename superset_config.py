@@ -1,7 +1,39 @@
 import os
 
+# Check if SAML is enabled before importing SAML components
+ENABLE_SAML_AUTH = os.environ.get('ENABLE_SAML_AUTH', 'true').lower() == 'true'
+
+# Conditionally import and configure SAML
+if ENABLE_SAML_AUTH:
+    from auth_saml import SamlSecurityManager
+    # Enable SAML authentication with database fallback
+    CUSTOM_SECURITY_MANAGER = SamlSecurityManager
+    
+    # Add custom template directory
+    import jinja2
+    FAB_TEMPLATE_LOADER = jinja2.ChoiceLoader([
+        jinja2.FileSystemLoader('/app/pythonpath/templates'),
+        jinja2.FileSystemLoader('/app/superset/templates')
+    ])
+
+AUTH_TYPE = 1  # AUTH_DB (allows both database and SAML auth)
+AUTH_USER_REGISTRATION = True
+
+# Configure default role for SAML users from environment
+SAML_DEFAULT_ROLE = os.environ.get('SAML_DEFAULT_ROLE', 'Gamma')
+AUTH_USER_REGISTRATION_ROLE = SAML_DEFAULT_ROLE
+
+# Allow both SAML and database authentication
+AUTH_ROLES_SYNC_AT_LOGIN = True  # Sync roles at login
+AUTH_ROLES_MAPPING = {
+    "Gamma": ["Gamma"],
+    "Alpha": ["Alpha"], 
+    "Admin": ["Admin"]
+}
+
+# Security settings
 TALISMAN_ENABLED = False
-HTTP_HEADERS={"X-Frame-Options":"ALLOWALL"}
+HTTP_HEADERS = {"X-Frame-Options": "ALLOWALL"}
 
 FEATURE_FLAGS = {
     "EMBEDDED_SUPERSET": True,

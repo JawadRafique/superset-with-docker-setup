@@ -1,22 +1,45 @@
-# My Superset Project
+# Apache Superset with SAML Authentication 🚀
 
-A simple Apache Superset setup with MySQL database integration, built on top of the official `apache/superset:5.0.0` image.
+**Version 1.2.0** - Enhanced Apache Superset setup with dual authentication support (SAML + Database) and complete enterprise integration.
 
-## 🎯 Purpose
+## ✨ Features (v1.2.0)
 
-This project provides a streamlined way to:
-- Set up Apache Superset with MySQL database support
-- Auto-initialize Superset with admin user creation
-- Use environment-based configuration for easy deployment
-- Build a custom Docker image with MySQL drivers included
+### 🔐 Dual Authentication System
+- **SAML SSO Integration** with Azure AD/ADFS
+- **Database Authentication** fallback  
+- **Seamless user experience** with unified login page
+- **Enterprise-ready security** with X.509 certificates
+
+### 🎯 Core Capabilities  
+- **Auto-initialization** with admin user creation
+- **MySQL database integration** with optimized connection pooling  
+- **Environment-based configuration** for easy deployment
+- **Custom Docker image** with pre-installed SAML libraries
+- **Helm chart support** for Kubernetes deployment
+
+## 🆕 What's New in v1.2.0
+
+### SAML Authentication Support
+- **Azure AD/ADFS integration** with complete SAML 2.0 support
+- **Dual login page** - users can choose SAML or database authentication  
+- **Automatic user provisioning** from SAML attributes
+- **Role mapping** from Azure AD groups to Superset roles
+- **X.509 certificate management** for secure SAML communications
+
+### Enhanced Security  
+- **Certificate-based SAML signing** for production environments
+- **Configurable SAML validation** (strict/relaxed modes)
+- **Debug mode** for troubleshooting SAML issues
+- **Secure environment variable** configuration
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - Docker and Docker Compose installed
-- MySQL database (local or cloud-based like Azure MySQL)
+- MySQL database (local or cloud-based like Azure MySQL)  
 - Port 8088 available for Superset
+- *Optional*: Azure AD application for SAML SSO
 
 ### 1. Clone and Setup
 
@@ -31,110 +54,227 @@ cd my-superset
 cp .env.example .env
 ```
 
-Edit `.env` file and update your MySQL database credentials:
+Edit `.env` file with your configuration:
 
 ```bash
-# Update these with your MySQL credentials
+# =============================================================================
+# Database Configuration (Required)
+# =============================================================================  
 DATABASE_URL=mysql://your-username:your-password@your-host:3306/your-database
-# Generate this secret key with openssl rand -base64 42 
+
+# =============================================================================
+# Security Configuration (Required)
+# =============================================================================
+# Generate with: openssl rand -base64 42
 SECRET_KEY=your-secret-key
 
-# Superset Admin User Configuration
+# =============================================================================
+# Superset Admin User (Required)
+# =============================================================================
 SUPERSET_ADMIN_USERNAME=admin
-SUPERSET_ADMIN_PASSWORD=admin123
+SUPERSET_ADMIN_PASSWORD=admin123  
 SUPERSET_ADMIN_FIRST_NAME=Super
 SUPERSET_ADMIN_LAST_NAME=Admin
 SUPERSET_ADMIN_EMAIL=admin@yourcompany.com
 
-# Superset Application Configuration
-SUPERSET_ENV=development
-SUPERSET_LOAD_EXAMPLES=no
-SUPERSET_WEBSERVER_PREFIX=/dash
+# =============================================================================
+# SAML Authentication (Optional - v1.2.0+)
+# =============================================================================
+ENABLE_SAML_AUTH=true                    # Set to 'false' to disable SAML
+SAML_DEFAULT_ROLE=Gamma                  # Default role for new SAML users
+
+# Your Superset URLs (update for production)
+SAML_SP_ENTITY_ID=http://localhost:8088
+SAML_SP_ACS_URL=http://localhost:8088/login/?acs=true  
+SAML_SP_SLS_URL=http://localhost:8088/login/?sls=true
+
+# Azure AD Configuration (get from your Azure AD admin)
+SAML_IDP_ENTITY_ID=https://sts.windows.net/your-tenant-id/
+SAML_IDP_SSO_URL=https://login.microsoftonline.com/your-tenant-id/saml2
+SAML_IDP_SLS_URL=https://login.microsoftonline.com/your-tenant-id/saml2
+SAML_IDP_X509_CERT=-----BEGIN CERTIFICATE-----\nYOUR_AZURE_CERTIFICATE\n-----END CERTIFICATE-----
 ```
 
-### 3. Build Custom Image
+### 3. Generate SAML Certificates (If using SAML)
 
 ```bash
-docker build . -t mysuperset:latest
+# Generate private key and certificate for SAML
+openssl req -x509 -new -newkey rsa:2048 -nodes \
+  -keyout saml_sp.key -out saml_sp.crt -days 3650 \
+  -subj "/C=US/ST=State/L=City/O=Organization/CN=superset.yourcompany.com"
 ```
 
-### 4. Start Superset
+Add the generated certificates to your `.env` file:
+
+```bash
+# Add these to your .env file
+SAML_SP_X509_CERT="$(cat saml_sp.crt | tr -d '\n')"  
+SAML_SP_PRIVATE_KEY="$(cat saml_sp.key | tr -d '\n')"
+```
+
+### 4. Build Custom Image
+
+```bash
+docker build . -t jawad-superset:1.2.0
+```
+
+### 5. Start Superset
 
 ```bash
 docker-compose up -d
 ```
 
-### 5. Access Superset
+### 6. Access Superset
 
 - **Superset Dashboard**: http://localhost:8088
-- Login with the credentials you set in the `.env` file
+- **Database + SAML Login**: Choose your preferred authentication method
+- **Default Admin**: Use credentials from your `.env` file
+
+## 🔐 SAML Authentication Setup
+
+### Azure AD Configuration
+
+1. **Register Application** in Azure AD
+2. **Configure SAML**: Use Entity ID and ACS URL from your `.env` file  
+3. **Generate Certificate**: Download the signing certificate
+4. **Update .env**: Add Azure AD configuration details
+
+### SAML User Flow
+
+1. User visits http://localhost:8088
+2. **Dual Login Page** displays with options:
+   - **"Sign in with Azure"** button for SAML SSO
+   - **Database login form** for local authentication
+3. **SAML Users**: Redirected to Azure AD → auto-provisioned in Superset
+4. **Database Users**: Direct login with username/password
+
+### Troubleshooting SAML
+
+Enable debug mode in your `.env` file:
+
+```bash
+SAML_DEBUG=true
+```
+
+Check logs for SAML authentication issues:
+
+```bash
+docker-compose logs superset | grep -i saml
+```
 
 ## 📁 Project Structure
 
 ```
-.
-├── docker-compose.yml          # Service orchestration
-├── Dockerfile                  # Custom Superset image with MySQL drivers
-├── entrypoint.sh              # Auto-initialization script
-├── superset_config.py         # Superset configuration
-├── .env.example              # Environment variables template
-├── .gitignore               # Git ignore rules
-├── volumes/                # Persistent data storage
-│   └── superset/          # Superset application data
-└── README.md             # This file
+├── docker-compose.yml              # Service orchestration (v1.2.0)
+├── Dockerfile                      # Custom image with SAML + MySQL support  
+├── entrypoint.sh                  # Auto-initialization script
+├── superset_config.py             # Configuration with SAML integration
+├── auth_saml.py                   # Custom SAML security manager (v1.2.0)
+├── templates/                     # Custom templates for dual authentication
+│   ├── appbuilder/general/security/
+│   │   └── login_db.html         # Dual authentication login page
+│   ├── card/
+│   └── handlebars/
+├── .env.example                   # Environment variables template  
+├── version                        # Version 1.2.0
+├── volumes/                       # Persistent data storage
+│   └── superset/                  # Superset application data
+└── README.md                      # This documentation
 ```
 
-## 🔧 Configuration
+## 🔧 Configuration Files
+
+### Key Files (v1.2.0)
+
+#### [superset_config.py](superset_config.py)
+- **Purpose**: Main configuration with conditional SAML support
+- **Features**: Environment-based SAML toggle, template paths, security settings
+- **SAML Integration**: Automatic SAML security manager loading when enabled
+
+#### [auth_saml.py](auth_saml.py) ⚡ NEW
+- **Purpose**: Custom SAML security manager for dual authentication  
+- **Features**: Azure AD/ADFS integration, user auto-provisioning, role mapping
+- **Template Support**: Custom login views with SAML + database options
+
+#### [templates/appbuilder/general/security/login_db.html](templates/appbuilder/general/security/login_db.html) ⚡ NEW
+- **Purpose**: Unified login page with dual authentication  
+- **Features**: Azure AD button, database login form, responsive design
+- **User Experience**: Seamless choice between SAML and database authentication
 
 ### Environment Variables
 
-The project uses environment variables for configuration:
-
+#### Core Configuration (Required)
 - `DATABASE_URL`: MySQL connection string
-- `SECRET_KEY`: Superset secret key for sessions
+- `SECRET_KEY`: Superset secret key for sessions  
 - `SUPERSET_ADMIN_*`: Admin user configuration
-- `SUPERSET_ENV`: Environment mode (development/production)
 
-### Auto-Initialization
+#### SAML Configuration (Optional v1.2.0+)  
+- `ENABLE_SAML_AUTH`: Toggle SAML authentication (true/false)
+- `SAML_SP_*`: Service Provider configuration (Entity ID, ACS URL, certificates)
+- `SAML_IDP_*`: Identity Provider configuration (Azure AD details)
+- `SAML_DEFAULT_ROLE`: Default role for new SAML users (Gamma/Alpha/Admin)
 
-The custom entrypoint script automatically:
-1. Waits for MySQL database to be ready
-2. Creates database schema if needed
-3. Creates admin user on first run
-4. Upgrades database on subsequent runs
-5. Starts Superset web server
+### Auto-Initialization Enhanced (v1.2.0)
 
-## 🛠️ Development
+The enhanced entrypoint script automatically:
+1. **Database Readiness**: Waits for MySQL database connectivity
+2. **Schema Management**: Creates/upgrades database schema
+3. **SAML Setup**: Configures SAML authentication when enabled  
+4. **Admin User**: Creates admin user on first run
+5. **Template Loading**: Registers custom SAML templates
+6. **Service Startup**: Starts Superset with dual authentication support
 
-### Rebuilding the Image
+## 🛠️ Development & Deployment
 
-After making changes to configuration:
+### Local Development
 
 ```bash
-docker build --no-cache . -t mysuperset:latest
+# Rebuild with SAML support 
+docker build --no-cache . -t jawad-superset:1.2.0
 docker-compose up -d
-```
 
-### Accessing the Container
+# View logs with SAML debug info
+docker-compose logs -f superset | grep -E "(SAML|Auth)"
 
-```bash
+# Access container for debugging
 docker exec -it jawad-superset bash
 ```
 
-### Viewing Logs
+### Production Deployment
 
-```bash
-docker-compose logs -f superset
+#### Docker Compose
+Update `docker-compose.yml` with production settings:
+
+```yaml
+version: '3.8'
+services:
+  superset:
+    image: jawad-superset:1.2.0
+    environment:
+      - ENABLE_SAML_AUTH=true
+      - SAML_SP_ENTITY_ID=https://superset.yourcompany.com  
+      - SUPERSET_ENV=production
 ```
 
-## 🔗 MySQL Integration
+#### Kubernetes with Helm
+Use the included Helm templates in the `k8s/` directory:
 
-This setup is specifically designed for MySQL databases:
+```bash
+helm install superset ./k8s/superset-helm \
+  --set image.tag=1.2.0 \
+  --set saml.enabled=true \
+  --set saml.idpEntityId=https://sts.windows.net/your-tenant/
+```
 
-- Includes both `mysqlclient` and `PyMySQL` drivers
-- Automatic MySQL connection validation
-- Optimized engine options for MySQL performance
-- Support for cloud databases like Azure MySQL
+## 🔗 Database Integration
+
+Enhanced MySQL integration with SAML authentication support:
+
+- **Dual Drivers**: Both `mysqlclient` and `PyMySQL` for maximum compatibility
+- **Connection Validation**: Automatic MySQL connection health checks
+- **Performance Optimization**: Optimized engine options for MySQL  
+- **Cloud Support**: Azure MySQL, AWS RDS, Google Cloud SQL compatibility
+- **SAML User Storage**: Seamless user provisioning in MySQL backend
 
 ### Connection String Format
 
@@ -142,48 +282,127 @@ This setup is specifically designed for MySQL databases:
 # Standard MySQL
 DATABASE_URL=mysql://username:password@host:port/database
 
-# Azure MySQL (with SSL)
+# Azure MySQL (with SSL) 
 DATABASE_URL=mysql://username:password@host:port/database?ssl_mode=REQUIRED
+
+# Production with connection pooling
+DATABASE_URL=mysql://username:password@host:port/database?charset=utf8&pool_size=10&max_overflow=20
 ```
 
 ## 🚨 Troubleshooting
 
-### Common Issues
+### SAML Authentication Issues (v1.2.0)
+
+**SAML Login Not Working:**
+1. Verify `ENABLE_SAML_AUTH=true` in `.env`
+2. Check Azure AD application configuration
+3. Validate certificate format (no line breaks in .env)
+4. Enable SAML debug: `SAML_DEBUG=true`
+
+**Azure AD Configuration:**
+```bash
+# Check SAML logs
+docker-compose logs superset | grep -i saml
+
+# Verify SAML configuration
+docker exec jawad-superset cat /app/superset_config.py | grep -A 20 "SAML"
+```
+
+**User Provisioning Issues:**
+- Check `SAML_DEFAULT_ROLE` setting  
+- Verify user email format from Azure AD
+- Ensure database connectivity for user creation
+
+### General Issues  
 
 **Database Connection Failed:**
 - Verify MySQL credentials in `.env`
-- Ensure MySQL server is accessible
+- Test connection: `mysql -h host -u user -p database`
 - Check firewall settings for cloud databases
+- Validate SSL requirements for Azure MySQL
 
 **Image Build Issues:**
-- Use `--no-cache` flag when rebuilding
-- Ensure Docker has sufficient memory
+- Use `--no-cache` flag: `docker build --no-cache . -t jawad-superset:1.2.0`
+- Ensure Docker has sufficient memory (4GB+ recommended)
+- Check for template file changes requiring rebuild
 
 **Environment Variables Not Loading:**
-- Verify `.env` file exists and is properly formatted
+- Verify `.env` file format (no spaces around = signs)  
 - Rebuild image after configuration changes
+- Check for hidden characters in certificate strings
 
-### Reset Environment
+### Advanced Debugging
 
-To start fresh:
 ```bash
+# Check SAML configuration inside container
+docker exec jawad-superset python -c "
+import os; 
+print('SAML Enabled:', os.getenv('ENABLE_SAML_AUTH'));
+print('IDP Entity:', os.getenv('SAML_IDP_ENTITY_ID')[:50]+'...')
+"
+
+# Validate MySQL connection
+docker exec jawad-superset python -c "
+from sqlalchemy import create_engine;
+engine = create_engine(os.getenv('DATABASE_URL'));
+print('DB Connection:', engine.execute('SELECT 1').scalar())
+"
+
+# Reset environment completely  
 docker-compose down -v
 rm -rf volumes/
-docker build --no-cache . -t mysuperset:latest
+docker rmi jawad-superset:1.2.0
+docker build . -t jawad-superset:1.2.0
 docker-compose up -d
 ```
 
-## 📚 Documentation
+## 🌟 Benefits of v1.2.0
 
-- [Github Repo](https://github.com/JawadRafique/superset-with-docker-setup)
-- [Public Docker Image](https://hub.docker.com/r/jawadrafique/jawad-superset)
-- [Apache Superset Documentation](https://superset.apache.org/docs/intro)
-- [MySQL Connection Guide](https://superset.apache.org/docs/databases/mysql)
+### For Organizations
+- **Enterprise SSO**: Seamless integration with existing Azure AD infrastructure
+- **Security Compliance**: X.509 certificate-based authentication  
+- **User Management**: Automatic user provisioning and role assignment
+- **Flexibility**: Optional SAML - can disable for simpler setups
+
+### For Developers  
+- **Dual Authentication**: Database fallback for service accounts and testing
+- **Easy Configuration**: Environment variable-based setup
+- **Debug Support**: Comprehensive logging and troubleshooting tools
+- **Template Customization**: Override login pages and authentication flows
+
+### For DevOps
+- **Container Ready**: Production-ready Docker image with SAML support
+- **Kubernetes Support**: Helm charts with SAML environment variables  
+- **Monitoring**: Enhanced logging for authentication events
+- **Scalability**: Stateless SAML authentication for multi-instance deployments
+
+## 📚 Documentation & Resources
+
+### Project Resources
+- **[GitHub Repository](https://github.com/JawadRafique/superset-with-docker-setup)** - Source code and issues
+- **[Docker Hub](https://hub.docker.com/r/jawadrafique/jawad-superset:1.2.0)** - Ready-to-use container image
+- **[Release Notes v1.2.0](./CHANGELOG.md)** - Detailed changes and migration guide
+
+### Apache Superset Documentation  
+- **[Official Documentation](https://superset.apache.org/docs/intro)** - Complete Superset guide
+- **[Security Configuration](https://superset.apache.org/docs/security/)** - Security best practices
+- **[Database Connections](https://superset.apache.org/docs/databases/mysql)** - MySQL setup guide
+
+### SAML Integration References
+- **[OneLogin SAML Python](https://github.com/onelogin/python3-saml)** - SAML library documentation  
+- **[Azure AD SAML](https://docs.microsoft.com/en-us/azure/active-directory/saml-claims-customization)** - Azure AD SAML setup
+- **[Flask-AppBuilder Security](https://flask-appbuilder.readthedocs.io/en/latest/security.html)** - Authentication framework
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+## 🤝 Contributing  
+
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
 
 ---
 
-**Note**: This is a development-focused setup. For production deployments, ensure proper security configurations, SSL certificates, and resource allocations.
+**⚡ Version 1.2.0** - Enhanced Apache Superset with SAML authentication support  
+**🛡️ Production Ready** - Secure, scalable, and enterprise-friendly setup  
+**📧 Support** - [Open an issue](https://github.com/JawadRafique/superset-with-docker-setup/issues) for support

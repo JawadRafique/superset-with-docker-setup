@@ -20,13 +20,53 @@ superset:
   # Docker image configuration
   image:
     package: jawad-superset
-    tag: "1.1.0"
+    tag: "1.2.0"
   
   # Application port
   port: 8088
   
+  # Security configuration
+  secretKey: "nalhZ0gUyMHqfdPxpnL4z1cLGmCC2yZu1tgGECSUMIAxDOFiPD1J5eft"
+  
+  # Application settings
+  env: "development"
+  loadExamples: "no"
+  webserverPrefix: "/dash"
+  
+  # Admin user configuration
+  admin:
+    username: "admin"
+    password: "admin123"
+    firstName: "Super"
+    lastName: "Admin"
+    email: "admin@yourcompany.com"
+  
+  # SAML Authentication Configuration (v1.2.0+)
+  saml:
+    enabled: true
+    defaultRole: "Gamma"
+    strict: true
+    debug: false
+    
+    # Service Provider (Your Superset instance)
+    sp:
+      entityId: "https://your-superset-domain.com"
+      acsUrl: "https://your-superset-domain.com/login/?acs=true"
+      slsUrl: "https://your-superset-domain.com/login/?sls=true"
+      nameIdFormat: "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+      # Optional: Add your SP certificates
+      x509Cert: ""
+      privateKey: ""
+    
+    # Identity Provider (Azure AD/ADFS)
+    idp:
+      entityId: "https://sts.windows.net/your-tenant-id/"
+      ssoUrl: "https://login.microsoftonline.com/your-tenant-id/saml2"
+      slsUrl: "https://login.microsoftonline.com/your-tenant-id/saml2"
+      x509Cert: ""  # Required: Your Azure AD certificate
+  
   # Database configuration
-  database:
+  db:
     host: host
     port: 3306
     database: database
