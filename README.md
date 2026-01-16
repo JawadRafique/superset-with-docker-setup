@@ -5,7 +5,7 @@
 ![Docker Pulls](https://img.shields.io/docker/pulls/jawadrafique/jawad-superset?style=flat-square)
 ![Docker Image Version](https://img.shields.io/docker/v/jawadrafique/jawad-superset/latest?style=flat-square)
 ![Docker Image Size](https://img.shields.io/docker/image-size/jawadrafique/jawad-superset/latest?style=flat-square)
-![GitHub](https://img.shields.io/github/license/jawadrafique/superset-with-docker-setup?style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 
 ## ✨ Features (v1.2.0)
 
