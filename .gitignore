@@ -179,6 +179,7 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 .env.oauth
+.env.old
 
 # templates
 components/

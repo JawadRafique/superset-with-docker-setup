@@ -82,22 +82,6 @@
                         </div>
                     </form>
                 </div>
-
-                <!-- Registration Link -->
-                {% if appbuilder.sm.auth_user_registration %}
-                <div style="margin-top: 20px; text-align: center">
-                    <a href="{{ appbuilder.get_url_for_userregistration }}">
-                        {{ _("Don't have an account? Register here") }}
-                    </a>
-                </div>
-                {% endif %}
-
-                <!-- Status Information -->
-                <div style="margin-top: 20px; text-align: center">
-                    <small class="text-muted">
-                        SAML Authentication: {{ "Enabled" if saml_enabled else "Disabled" }}
-                    </small>
-                </div>
             </div>
         </div>
     </div>
