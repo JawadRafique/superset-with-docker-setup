@@ -32,3 +32,27 @@ jobs:
           # Tag and push version
           docker tag jawad-superset:latest ${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:${{ steps.version.outputs.VERSION }}
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:${{ steps.version.outputs.VERSION }}
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          release_name: Release v${{ steps.version.outputs.VERSION }}
+          body: |
+            ## Changes in v${{ steps.version.outputs.VERSION }}
+            - Docker image published to Docker Hub: `${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:${{ steps.version.outputs.VERSION }}`
+            - Built from commit: ${{ github.sha }}
+            - Triggered by: ${{ github.event_name }} on branch ${{ github.ref_name }}
+            
+            ## Docker Images
+            - `${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:latest`
+            - `${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:${{ steps.version.outputs.VERSION }}`
+            
+            ## Installation
+            ```bash
+            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:${{ steps.version.outputs.VERSION }}
+            ```
+          draft: false
+          prerelease: false
