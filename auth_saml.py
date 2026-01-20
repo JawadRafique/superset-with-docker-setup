@@ -19,8 +19,6 @@ from onelogin.saml2.settings import OneLogin_Saml2_Settings
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 from werkzeug.wrappers import Response as WerkzeugResponse
 from typing import Optional
-from flask_wtf import FlaskForm
-from flask_wtf.csrf import exempt
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +99,9 @@ class CustomSamlAuthView(AuthDBView):
         # Handle SAML ACS callback
         if request.method == 'POST' and 'SAMLResponse' in request.form:
             logger.info("📥 SAML Response received")
+            # Bypass CSRF for SAML responses from external providers
+            if hasattr(g, 'csrf_token'):
+                g.csrf_token = None
             return self._handle_saml_response()
         
         # For GET requests or database login, show our custom template
@@ -118,21 +119,6 @@ class CustomSamlAuthView(AuthDBView):
         # For POST requests (database login), call parent method
         logger.info("🔐 Processing database login")
         return super().login()
-    
-    @expose('/saml/acs', methods=['POST'])
-    @exempt
-    def saml_acs(self):
-        """Handle SAML ACS callback - CSRF exempt"""
-        logger.info("📥 SAML ACS endpoint called (CSRF exempt)")
-        logger.info(f"🔍 Request method: {request.method}")
-        logger.info(f"🔍 Request form keys: {list(request.form.keys())}")
-        
-        if 'SAMLResponse' in request.form:
-            return self._handle_saml_response()
-        else:
-            logger.error("❌ No SAMLResponse in form data")
-            flash('Invalid SAML response', 'danger')
-            return redirect('/login/')
     
     def _handle_saml_login(self):
         """Handle SAML authentication request"""

@@ -6,6 +6,7 @@ on:
     paths:
       - 'Dockerfile'
       - 'entrypoint.sh'
+      - 'auth_saml.py'
       - 'version'
 
 jobs: 
