@@ -126,6 +126,21 @@ class CustomSamlAuthView(AuthDBView):
         logger.info("🔐 Processing database login")
         return super().login()
     
+    @expose('/acs', methods=['POST'])
+    @no_cache
+    def acs(self):
+        """SAML Assertion Consumer Service - CSRF exempt endpoint"""
+        logger.info("📥 SAML ACS endpoint called (CSRF exempt)")
+        logger.info(f"🔍 Request method: {request.method}")
+        logger.info(f"🔍 Request form keys: {list(request.form.keys())}")
+        
+        if 'SAMLResponse' in request.form:
+            return self._handle_saml_response()
+        else:
+            logger.error("❌ No SAMLResponse in form data")
+            flash('Invalid SAML response', 'danger')
+            return redirect('/login/')
+    
     def _handle_saml_login(self):
         """Handle SAML authentication request"""
         try:

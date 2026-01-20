@@ -33,12 +33,7 @@ AUTH_ROLES_MAPPING = {
 
 # Security settings
 TALISMAN_ENABLED = False
-# Keep CSRF enabled for security, we'll handle SAML exemption differently
-WTF_CSRF_ENABLED = True  
-# Exempt specific SAML endpoints from CSRF protection
-WTF_CSRF_EXEMPT_LIST = [
-    'CustomSamlAuthView.acs',  # Only SAML ACS endpoint
-]
+WTF_CSRF_ENABLED = False
 HTTP_HEADERS = {"X-Frame-Options": "ALLOWALL"}
 
 FEATURE_FLAGS = {

@@ -44,12 +44,12 @@ jobs:
           name: Release v${{ steps.version.outputs.VERSION }}
           body: |
             ## Changes in v${{ steps.version.outputs.VERSION }}
-            - Docker image published to Docker Hub: `${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:${{ steps.version.outputs.VERSION }}`
+            - Docker image published to Docker Hub: [`${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:${{ steps.version.outputs.VERSION }}`](https://hub.docker.com/r/${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset)
             - Built from commit: ${{ github.sha }}
             - Triggered by: ${{ github.event_name }} on branch ${{ github.ref_name }}
+            - Commit message: "${{ github.event.head_commit.message }}"
             
-            ## Docker Images
-            - `${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:latest`
+            ## Docker Image
             - `${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:${{ steps.version.outputs.VERSION }}`
             
             ## Installation
