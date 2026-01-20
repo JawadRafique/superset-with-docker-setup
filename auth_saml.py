@@ -91,18 +91,24 @@ class CustomSamlAuthView(AuthDBView):
         if g.user is not None and g.user.is_authenticated:
             return redirect(self.appbuilder.get_url_for_index)
         
+        # Handle SAML ACS callback FIRST (before CSRF check)
+        if request.method == 'POST' and 'SAMLResponse' in request.form:
+            logger.info("📥 SAML Response received")
+            # Temporarily disable CSRF validation for this SAML response only
+            logger.info("🔓 Bypassing CSRF validation for SAML response from external provider")
+            original_csrf_enabled = getattr(self.appbuilder.app.config, 'WTF_CSRF_ENABLED', True)
+            self.appbuilder.app.config['WTF_CSRF_ENABLED'] = False
+            try:
+                result = self._handle_saml_response()
+                return result
+            finally:
+                # Always re-enable CSRF protection
+                self.appbuilder.app.config['WTF_CSRF_ENABLED'] = original_csrf_enabled
+        
         # Handle SAML login request
         if 'saml' in request.args and request.args.get('saml') == 'true':
             logger.info("🚀 SAML login requested")
             return self._handle_saml_login()
-        
-        # Handle SAML ACS callback
-        if request.method == 'POST' and 'SAMLResponse' in request.form:
-            logger.info("📥 SAML Response received")
-            # Bypass CSRF for SAML responses from external providers
-            if hasattr(g, 'csrf_token'):
-                g.csrf_token = None
-            return self._handle_saml_response()
         
         # For GET requests or database login, show our custom template
         if request.method == 'GET':
