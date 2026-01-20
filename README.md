@@ -1,13 +1,13 @@
 # Apache Superset with SAML Authentication 🚀
 
-**Version 1.2.0** - Enhanced Apache Superset setup with dual authentication support (SAML + Database) and complete enterprise integration.
+**Version 1.2.6** - Enhanced Apache Superset setup with dual authentication support (SAML + Database) and complete enterprise integration.
 
 ![Docker Pulls](https://img.shields.io/docker/pulls/jawadrafique/jawad-superset?style=flat-square)
 ![Docker Image Version](https://img.shields.io/docker/v/jawadrafique/jawad-superset/latest?style=flat-square)
 ![Docker Image Size](https://img.shields.io/docker/image-size/jawadrafique/jawad-superset/latest?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 
-## ✨ Features (v1.2.0)
+## ✨ Features (v1.2.6)
 
 ### 🔐 Dual Authentication System
 - **SAML SSO Integration** with Azure AD/ADFS
@@ -22,14 +22,24 @@
 - **Custom Docker image** with pre-installed SAML libraries
 - **Helm chart support** for Kubernetes deployment
 
-## 🆕 What's New in v1.2.0
+## 🆕 What's New in v1.2.6
+
+### 🎥 SAML Authentication Demo
+**[Watch the SAML Demo Video](https://youtu.be/eUC1EElVgTo)** - See complete SAML authentication flow with Azure AD integration!
+
+### Production-Ready SAML Support  
+- **Azure App Gateway SSL termination** compatibility
+- **Updated Azure AD certificates** for signature validation
+- **Enhanced error handling** and debugging for SAML authentication
+- **Complete certificate management** (both SP and IdP certificates)
+- **Verified working configuration** with Azure AD integration
 
 ### SAML Authentication Support
 - **Azure AD/ADFS integration** with complete SAML 2.0 support
 - **Dual login page** - users can choose SAML or database authentication  
 - **Automatic user provisioning** from SAML attributes
 - **Role mapping** from Azure AD groups to Superset roles
-- **X.509 certificate management** for secure SAML communications
+- **Full signature validation** with proper certificate management
 
 ### Enhanced Security  
 - **Certificate-based SAML signing** for production environments
@@ -83,44 +93,58 @@ SUPERSET_ADMIN_LAST_NAME=Admin
 SUPERSET_ADMIN_EMAIL=admin@yourcompany.com
 
 # =============================================================================
-# SAML Authentication (Optional - v1.2.0+)
+# SAML Authentication (Optional - v1.2.6+)
 # =============================================================================
 ENABLE_SAML_AUTH=true                    # Set to 'false' to disable SAML
 SAML_DEFAULT_ROLE=Gamma                  # Default role for new SAML users
 
 # Your Superset URLs (update for production)
-SAML_SP_ENTITY_ID=http://localhost:8088
-SAML_SP_ACS_URL=http://localhost:8088/login/?acs=true  
-SAML_SP_SLS_URL=http://localhost:8088/login/?sls=true
+SAML_SP_ENTITY_ID=https://your-superset-domain.com
+SAML_SP_ACS_URL=https://your-superset-domain.com/acs  
+SAML_SP_SLS_URL=https://your-superset-domain.com/login/?sls=true
+SAML_SP_NAMEID_FORMAT=urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress
+
+# SP Certificate and Private Key (Required for your working setup)
+SAML_SP_X509_CERT=-----BEGIN CERTIFICATE-----\nYOUR_SP_CERTIFICATE\n-----END CERTIFICATE-----
+SAML_SP_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nYOUR_SP_PRIVATE_KEY\n-----END PRIVATE KEY-----
 
 # Azure AD Configuration (get from your Azure AD admin)
 SAML_IDP_ENTITY_ID=https://sts.windows.net/your-tenant-id/
 SAML_IDP_SSO_URL=https://login.microsoftonline.com/your-tenant-id/saml2
 SAML_IDP_SLS_URL=https://login.microsoftonline.com/your-tenant-id/saml2
-SAML_IDP_X509_CERT=-----BEGIN CERTIFICATE-----\nYOUR_AZURE_CERTIFICATE\n-----END CERTIFICATE-----
+
+# Azure AD Signing Certificate (REQUIRED - get latest from Azure AD)
+SAML_IDP_X509_CERT=-----BEGIN CERTIFICATE-----\nYOUR_LATEST_AZURE_CERTIFICATE\n-----END CERTIFICATE-----
 ```
 
-### 3. Generate SAML Certificates (If using SAML)
+### 3. Generate SAML Certificates (Required for SAML)
+
+**SP Certificates**: Generate certificates for your Superset Service Provider:
 
 ```bash
-# Generate private key and certificate for SAML
+# Generate private key and certificate for SAML SP
 openssl req -x509 -new -newkey rsa:2048 -nodes \
   -keyout saml_sp.key -out saml_sp.crt -days 3650 \
-  -subj "/C=US/ST=State/L=City/O=Organization/CN=superset.yourcompany.com"
+  -subj "/C=US/ST=State/L=City/O=Organization/CN=your-superset-domain.com"
 ```
 
 Add the generated certificates to your `.env` file:
 
 ```bash
 # Add these to your .env file
-SAML_SP_X509_CERT="$(cat saml_sp.crt | tr -d '\n')"  
+SAML_SP_X509_CERT="$(cat saml_sp.crt | tr -d '\n')"
 SAML_SP_PRIVATE_KEY="$(cat saml_sp.key | tr -d '\n')"
 ```
+
+**Azure AD Certificate**: Download the signing certificate from Azure AD:
+1. Go to Azure AD > Enterprise Applications > Your App > Single sign-on
+2. Download the **Certificate (Base64)** 
+3. Add it to your `.env` file as `SAML_IDP_X509_CERT`
 
 ### 4. Build Custom Image
 
 ```bash
-docker build . -t jawad-superset:1.2.0
+docker build . -t jawad-superset:1.2.6
 ```
 
 ### 5. Start Superset
@@ -387,8 +411,9 @@ docker-compose up -d
 
 ### Project Resources
 - **[GitHub Repository](https://github.com/JawadRafique/superset-with-docker-setup)** - Source code and issues
-- **[Docker Hub](https://hub.docker.com/r/jawadrafique/jawad-superset:1.2.0)** - Ready-to-use container image
-- **[Release Notes v1.2.0](./CHANGELOG.md)** - Detailed changes and migration guide
+- **[Docker Hub](https://hub.docker.com/r/jawadrafique/jawad-superset:1.2.6)** - Ready-to-use container image
+- **[SAML Demo Video](https://youtu.be/eUC1EElVgTo)** - Complete SAML authentication walkthrough
+- **[Release Notes v1.2.6](./CHANGELOG.md)** - Detailed changes and migration guide
 
 ### Apache Superset Documentation  
 - **[Official Documentation](https://superset.apache.org/docs/intro)** - Complete Superset guide
@@ -428,6 +453,6 @@ Your support helps maintain and improve this project!
 
 ---
 
-**⚡ Version 1.2.0** - Enhanced Apache Superset with SAML authentication support  
+**⚡ Version 1.2.6** - Production-ready Apache Superset with enhanced SAML authentication and Azure App Gateway support  
 **🛡️ Production Ready** - Secure, scalable, and enterprise-friendly setup  
 **📧 Support** - [Open an issue](https://github.com/JawadRafique/superset-with-docker-setup/issues) for support

@@ -1,6 +1,22 @@
-# SAML Configuration Guide for Apache Superset
+# SAML Configuration Guide for Apache Superset (v1.2.6)
 
-This guide explains how to configure SAML authentication with Azure ADFS for your Apache Superset instance.
+🎥 **[Watch the SAML Demo Video](SAML-Demo.mov)** - Complete walkthrough of SAML authentication setup and testing!
+
+This guide explains how to configure SAML authentication with Azure AD for your Apache Superset instance.
+
+## 🆕 Version 1.2.6 Updates
+
+### ✅ Production-Ready SAML Configuration
+- **Complete certificate management** - Both SP and IdP certificates for full SAML compliance
+- **Azure App Gateway compatibility** - Works with SSL termination and offloading
+- **Enhanced signature validation** with proper error handling
+- **Verified working setup** - Tested configuration with Azure AD integration
+
+### 🔧 Enhanced SAML Features  
+- **Azure App Gateway compatibility** - Works with SSL offloading
+- **Updated Azure AD certificates** - Supports latest Azure AD signing certificates
+- **Better error logging** - Enhanced debugging for SAML authentication issues
+- **Complete SAML workflow** - Full SP and IdP certificate support
 
 ## Overview
 
