@@ -63,12 +63,13 @@ def init_saml_auth(req):
 
 
 def prepare_flask_request(request):
-    """Prepare Flask request for SAML"""
+    """Prepare Flask request for SAML - force HTTPS for Azure App Gateway SSL termination"""
     url_data = request.url.split('/')
+    # Force HTTPS since Azure App Gateway terminates SSL and forwards HTTP internally
     return {
-        'https': 'on' if request.scheme == 'https' else 'off',
+        'https': 'on',  # Always force HTTPS for SAML
         'http_host': request.host,
-        'server_port': url_data[2].split(':')[1] if ':' in url_data[2] else ('443' if request.scheme == 'https' else '80'),
+        'server_port': '443',  # Always use HTTPS port for SAML
         'script_name': request.path,
         'get_data': request.args.copy(),
         'post_data': request.form.copy()
