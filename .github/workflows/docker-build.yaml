@@ -12,6 +12,9 @@ on:
 jobs: 
   publish-images:
     runs-on: ubuntu-latest 
+    permissions:
+      contents: write  # Required for creating releases
+      packages: write  # Required for Docker Hub pushes
 
     steps:
       - name: Checkout repository
@@ -35,12 +38,10 @@ jobs:
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:${{ steps.version.outputs.VERSION }}
 
       - name: Create GitHub Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.version.outputs.VERSION }}
-          release_name: Release v${{ steps.version.outputs.VERSION }}
+          name: Release v${{ steps.version.outputs.VERSION }}
           body: |
             ## Changes in v${{ steps.version.outputs.VERSION }}
             - Docker image published to Docker Hub: `${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:${{ steps.version.outputs.VERSION }}`
