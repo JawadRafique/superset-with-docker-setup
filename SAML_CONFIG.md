@@ -1,6 +1,6 @@
 # SAML Configuration Guide for Apache Superset (v1.2.6)
 
-🎥 **[Watch the SAML Demo Video](SAML-Demo.mov)** - Complete walkthrough of SAML authentication setup and testing!
+🎥 **[Watch the SAML Demo Video](https://youtu.be/eUC1EElVgTo)** - Complete walkthrough of SAML authentication setup and testing!
 
 This guide explains how to configure SAML authentication with Azure AD for your Apache Superset instance.
 
