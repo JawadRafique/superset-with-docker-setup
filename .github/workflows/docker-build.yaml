@@ -25,17 +25,17 @@ jobs:
         run: echo "VERSION=$(cat version)" >> $GITHUB_OUTPUT
 
       - name: Build Superset Docker Image
-        run: docker build --no-cache . -t jawad-superset:latest
+        run: docker build --no-cache . -t superset:latest
 
       - name: Push to Docker Hub
         run: |
           docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           # Tag and push latest
-          docker tag jawad-superset:latest ${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:latest
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:latest
+          docker tag superset:latest ${{ secrets.DOCKER_HUB_USERNAME }}/superset:latest
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/superset:latest
           # Tag and push version
-          docker tag jawad-superset:latest ${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:${{ steps.version.outputs.VERSION }}
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:${{ steps.version.outputs.VERSION }}
+          docker tag superset:latest ${{ secrets.DOCKER_HUB_USERNAME }}/superset:${{ steps.version.outputs.VERSION }}
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/superset:${{ steps.version.outputs.VERSION }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -44,17 +44,17 @@ jobs:
           name: Release v${{ steps.version.outputs.VERSION }}
           body: |
             ## Changes in v${{ steps.version.outputs.VERSION }}
-            - Docker image published to Docker Hub: [`${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:${{ steps.version.outputs.VERSION }}`](https://hub.docker.com/r/${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset)
+            - Docker image published to Docker Hub: [`${{ secrets.DOCKER_HUB_USERNAME }}/superset:${{ steps.version.outputs.VERSION }}`](https://hub.docker.com/r/${{ secrets.DOCKER_HUB_USERNAME }}/superset)
             - Built from commit: ${{ github.sha }}
             - Triggered by: ${{ github.event_name }} on branch ${{ github.ref_name }}
             - Commit message: "${{ github.event.head_commit.message }}"
             
             ## Docker Image
-            - `${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:${{ steps.version.outputs.VERSION }}`
+            - `${{ secrets.DOCKER_HUB_USERNAME }}/superset:${{ steps.version.outputs.VERSION }}`
             
             ## Installation
             ```bash
-            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/jawad-superset:${{ steps.version.outputs.VERSION }}
+            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/superset:${{ steps.version.outputs.VERSION }}
             ```
           draft: false
           prerelease: false

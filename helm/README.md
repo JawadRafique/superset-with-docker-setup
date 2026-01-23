@@ -69,14 +69,14 @@ helm install my-superset . \
 | `deployment.maxreplicas` | Maximum number of replicas | `3` |
 | `deployment.cpuutilization` | CPU threshold for scaling | `70` |
 | `deployment.memoryutilization` | Memory threshold for scaling | `80` |
-| `superset.image.package` | Docker image name | `jawad-superset` |
+| `superset.image.package` | Docker image name | `superset` |
 | `superset.image.tag` | Docker image tag | `1.1.0` |
 | `superset.port` | Application port | `8088` |
 
 ## Features
 
 - **Auto-scaling**: Horizontal Pod Autoscaler based on CPU and memory usage
-- **Custom Superset Image**: Uses `jawad-superset` with MySQL drivers and enhanced entrypoint
+- **Custom Superset Image**: Uses `superset` with MySQL drivers and enhanced entrypoint
 - **Database Integration**: MySQL database connection with configurable credentials
 - **Admin User**: Automatic creation of admin user during initialization
 - **NodePort Service**: Exposes Superset on a NodePort for external access

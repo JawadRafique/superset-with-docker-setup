@@ -39,6 +39,7 @@ HTTP_HEADERS = {"X-Frame-Options": "ALLOWALL"}
 FEATURE_FLAGS = {
     "EMBEDDED_SUPERSET": True,
     "ENABLE_TEMPLATE_PROCESSING": True,
+    "DASHBOARD_RBAC": True,
 }
 
 # Allow CSS styling in templates

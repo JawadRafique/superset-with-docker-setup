@@ -19,8 +19,8 @@ deployment:
 superset:
   # Docker image configuration
   image:
-    package: jawad-superset
-    tag: "1.2.0"
+    package: superset
+    tag: "1.0.0"
   
   # Application port
   port: 8088
@@ -41,7 +41,7 @@ superset:
     lastName: "Admin"
     email: "admin@yourcompany.com"
   
-  # SAML Authentication Configuration (v1.2.0+)
+  # SAML Authentication Configuration (v1.0.0+)
   saml:
     enabled: true
     defaultRole: "Gamma"

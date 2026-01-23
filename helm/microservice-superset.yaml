@@ -160,7 +160,7 @@ spec:
           value: "{{ .Values.superset.webserverPrefix }}"
 
         # =============================================================================
-        # SAML Authentication Configuration (v1.2.0+)
+        # SAML Authentication Configuration (v1.0.0+)
         # =============================================================================
         - name: ENABLE_SAML_AUTH
           value: "{{ .Values.superset.saml.enabled }}"

@@ -1,13 +1,13 @@
 # Apache Superset with SAML Authentication 🚀
 
-**Version 1.2.6** - Enhanced Apache Superset setup with dual authentication support (SAML + Database) and complete enterprise integration.
+**Version 1.0.0** - Enhanced Apache Superset setup with dual authentication support (SAML + Database) and complete enterprise integration.
 
-![Docker Pulls](https://img.shields.io/docker/pulls/jawadrafique/jawad-superset?style=flat-square)
-![Docker Image Version](https://img.shields.io/docker/v/jawadrafique/jawad-superset/latest?style=flat-square)
-![Docker Image Size](https://img.shields.io/docker/image-size/jawadrafique/jawad-superset/latest?style=flat-square)
+![Docker Pulls](https://img.shields.io/docker/pulls/jawadrafique/superset?style=flat-square)
+![Docker Image Version](https://img.shields.io/docker/v/jawadrafique/superset/latest?style=flat-square)
+![Docker Image Size](https://img.shields.io/docker/image-size/jawadrafique/superset/latest?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 
-## ✨ Features (v1.2.6)
+## ✨ Features (v1.0.0)
 
 ### 🔐 Dual Authentication System
 - **SAML SSO Integration** with Azure AD/ADFS
@@ -22,7 +22,7 @@
 - **Custom Docker image** with pre-installed SAML libraries
 - **Helm chart support** for Kubernetes deployment
 
-## 🆕 What's New in v1.2.6
+## 🆕 What's New in v1.0.0
 
 ### 🎥 SAML Authentication Demo
 **[Watch the SAML Demo Video](https://youtu.be/eUC1EElVgTo)** - See complete SAML authentication flow with Azure AD integration!
@@ -93,7 +93,7 @@ SUPERSET_ADMIN_LAST_NAME=Admin
 SUPERSET_ADMIN_EMAIL=admin@yourcompany.com
 
 # =============================================================================
-# SAML Authentication (Optional - v1.2.6+)
+# SAML Authentication (Optional - v1.0.0+)
 # =============================================================================
 ENABLE_SAML_AUTH=true                    # Set to 'false' to disable SAML
 SAML_DEFAULT_ROLE=Gamma                  # Default role for new SAML users
@@ -144,7 +144,7 @@ SAML_SP_PRIVATE_KEY="$(cat saml_sp.key | tr -d '\n')"
 ### 4. Build Custom Image
 
 ```bash
-docker build . -t jawad-superset:1.2.6
+docker build . -t superset:1.0.0
 ```
 
 ### 5. Start Superset
@@ -194,20 +194,20 @@ docker-compose logs superset | grep -i saml
 ## 📁 Project Structure
 
 ```
-├── docker-compose.yml              # Service orchestration (v1.2.0)
+├── docker-compose.yml              # Service orchestration (v1.0.0)
 ├── Dockerfile                      # Custom image with SAML + MySQL support  
 ├── entrypoint.sh                  # Auto-initialization script
 ├── superset_config.py             # Configuration with SAML integration
-├── auth_saml.py                   # Custom SAML security manager (v1.2.0)
+├── auth_saml.py                   # Custom SAML security manager (v1.0.0)
 ├── templates/                     # Custom templates for dual authentication
 │   └── appbuilder/general/security/
 │       └── login_db.html         # Dual authentication login page
-├── helm/                          # Kubernetes deployment (v1.2.0)
+├── helm/                          # Kubernetes deployment (v1.0.0)
 │   ├── microservice-superset.yaml # Helm template with SAML support
 │   └── values.yaml               # Configuration values
 ├── .env.example                   # Environment variables template  
 ├── .env                           # Your local configuration (git-ignored)
-├── version                        # Version 1.2.0
+├── version                        # Version 1.0.0
 ├── volumes/                       # Persistent data storage
 │   └── superset/                  # Superset application data
 └── README.md                      # This documentation
@@ -215,7 +215,7 @@ docker-compose logs superset | grep -i saml
 
 ## 🔧 Configuration Files
 
-### Key Files (v1.2.0)
+### Key Files (v1.0.0)
 
 #### [superset_config.py](superset_config.py)
 - **Purpose**: Main configuration with conditional SAML support
@@ -239,13 +239,13 @@ docker-compose logs superset | grep -i saml
 - `SECRET_KEY`: Superset secret key for sessions  
 - `SUPERSET_ADMIN_*`: Admin user configuration
 
-#### SAML Configuration (Optional v1.2.0+)  
+#### SAML Configuration (Optional v1.0.0+)  
 - `ENABLE_SAML_AUTH`: Toggle SAML authentication (true/false)
 - `SAML_SP_*`: Service Provider configuration (Entity ID, ACS URL, certificates)
 - `SAML_IDP_*`: Identity Provider configuration (Azure AD details)
 - `SAML_DEFAULT_ROLE`: Default role for new SAML users (Gamma/Alpha/Admin)
 
-### Auto-Initialization Enhanced (v1.2.0)
+### Auto-Initialization Enhanced (v1.0.0)
 
 The enhanced entrypoint script automatically:
 1. **Database Readiness**: Waits for MySQL database connectivity
@@ -261,14 +261,14 @@ The enhanced entrypoint script automatically:
 
 ```bash
 # Rebuild with SAML support 
-docker build --no-cache . -t jawad-superset:1.2.0
+docker build --no-cache . -t superset:1.0.0
 docker-compose up -d
 
 # View logs with SAML debug info
 docker-compose logs -f superset | grep -E "(SAML|Auth)"
 
 # Access container for debugging
-docker exec -it jawad-superset bash
+docker exec -it superset bash
 ```
 
 ### Production Deployment
@@ -280,7 +280,7 @@ Update `docker-compose.yml` with production settings:
 version: '3.8'
 services:
   superset:
-    image: jawad-superset:1.2.0
+    image: superset:1.0.0
     environment:
       - ENABLE_SAML_AUTH=true
       - SAML_SP_ENTITY_ID=https://superset.yourcompany.com  
@@ -292,7 +292,7 @@ Use the included Helm templates in the `k8s/` directory:
 
 ```bash
 helm install superset ./k8s/superset-helm \
-  --set image.tag=1.2.0 \
+  --set image.tag=1.0.0 \
   --set saml.enabled=true \
   --set saml.idpEntityId=https://sts.windows.net/your-tenant/
 ```
@@ -322,7 +322,7 @@ DATABASE_URL=mysql://username:password@host:port/database?charset=utf8&pool_size
 
 ## 🚨 Troubleshooting
 
-### SAML Authentication Issues (v1.2.0)
+### SAML Authentication Issues (v1.0.0)
 
 **SAML Login Not Working:**
 1. Verify `ENABLE_SAML_AUTH=true` in `.env`
@@ -336,7 +336,7 @@ DATABASE_URL=mysql://username:password@host:port/database?charset=utf8&pool_size
 docker-compose logs superset | grep -i saml
 
 # Verify SAML configuration
-docker exec jawad-superset cat /app/superset_config.py | grep -A 20 "SAML"
+docker exec superset cat /app/superset_config.py | grep -A 20 "SAML"
 ```
 
 **User Provisioning Issues:**
@@ -353,7 +353,7 @@ docker exec jawad-superset cat /app/superset_config.py | grep -A 20 "SAML"
 - Validate SSL requirements for Azure MySQL
 
 **Image Build Issues:**
-- Use `--no-cache` flag: `docker build --no-cache . -t jawad-superset:1.2.0`
+- Use `--no-cache` flag: `docker build --no-cache . -t superset:1.0.0`
 - Ensure Docker has sufficient memory (4GB+ recommended)
 - Check for template file changes requiring rebuild
 
@@ -366,14 +366,14 @@ docker exec jawad-superset cat /app/superset_config.py | grep -A 20 "SAML"
 
 ```bash
 # Check SAML configuration inside container
-docker exec jawad-superset python -c "
+docker exec superset python -c "
 import os; 
 print('SAML Enabled:', os.getenv('ENABLE_SAML_AUTH'));
 print('IDP Entity:', os.getenv('SAML_IDP_ENTITY_ID')[:50]+'...')
 "
 
 # Validate MySQL connection
-docker exec jawad-superset python -c "
+docker exec superset python -c "
 from sqlalchemy import create_engine;
 engine = create_engine(os.getenv('DATABASE_URL'));
 print('DB Connection:', engine.execute('SELECT 1').scalar())
@@ -382,12 +382,12 @@ print('DB Connection:', engine.execute('SELECT 1').scalar())
 # Reset environment completely  
 docker-compose down -v
 rm -rf volumes/
-docker rmi jawad-superset:1.2.0
-docker build . -t jawad-superset:1.2.0
+docker rmi superset:1.0.0
+docker build . -t superset:1.0.0
 docker-compose up -d
 ```
 
-## 🌟 Benefits of v1.2.0
+## 🌟 Benefits of v1.0.0
 
 ### For Organizations
 - **Enterprise SSO**: Seamless integration with existing Azure AD infrastructure
@@ -411,9 +411,9 @@ docker-compose up -d
 
 ### Project Resources
 - **[GitHub Repository](https://github.com/JawadRafique/superset-with-docker-setup)** - Source code and issues
-- **[Docker Hub](https://hub.docker.com/r/jawadrafique/jawad-superset:1.2.6)** - Ready-to-use container image
+- **[Docker Hub](https://hub.docker.com/r/jawadrafique/superset:1.0.0)** - Ready-to-use container image
 - **[SAML Demo Video](https://youtu.be/eUC1EElVgTo)** - Complete SAML authentication walkthrough
-- **[Release Notes v1.2.6](./CHANGELOG.md)** - Detailed changes and migration guide
+- **[Release Notes v1.0.0](./CHANGELOG.md)** - Detailed changes and migration guide
 
 ### Apache Superset Documentation  
 - **[Official Documentation](https://superset.apache.org/docs/intro)** - Complete Superset guide
@@ -453,6 +453,6 @@ Your support helps maintain and improve this project!
 
 ---
 
-**⚡ Version 1.2.6** - Production-ready Apache Superset with enhanced SAML authentication and Azure App Gateway support  
+**⚡ Version 1.0.0** - Production-ready Apache Superset with enhanced SAML authentication and Azure App Gateway support  
 **🛡️ Production Ready** - Secure, scalable, and enterprise-friendly setup  
 **📧 Support** - [Open an issue](https://github.com/JawadRafique/superset-with-docker-setup/issues) for support

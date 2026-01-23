@@ -1,10 +1,10 @@
-# SAML Configuration Guide for Apache Superset (v1.2.6)
+# SAML Configuration Guide for Apache Superset (v1.0.0)
 
 🎥 **[Watch the SAML Demo Video](https://youtu.be/eUC1EElVgTo)** - Complete walkthrough of SAML authentication setup and testing!
 
 This guide explains how to configure SAML authentication with Azure AD for your Apache Superset instance.
 
-## 🆕 Version 1.2.6 Updates
+## 🆕 Version 1.0.0 Updates
 
 ### ✅ Production-Ready SAML Configuration
 - **Complete certificate management** - Both SP and IdP certificates for full SAML compliance
@@ -134,14 +134,14 @@ The SAML integration maps these Azure AD attributes to Superset user fields:
 
 1. **Build the new Docker image:**
    ```bash
-   docker build --no-cache -t jawad-superset:1.2.0 .
+   docker build --no-cache -t superset:1.0.0 .
    ```
 
 2. **Update docker-compose.yml:**
    ```yaml
    services:
      superset:
-       image: jawad-superset:1.2.0
+       image: superset:1.0.0
    ```
 
 3. **Deploy:**
