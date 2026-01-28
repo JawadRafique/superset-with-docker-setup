@@ -86,4 +86,28 @@
         </div>
     </div>
 </div>
+
+<!-- Logout coordination script -->
+<script>
+(function() {
+    // Handle logout coordination between tabs
+    if (typeof BroadcastChannel !== 'undefined') {
+        const channel = new BroadcastChannel('superset-logout');
+        channel.addEventListener('message', function(event) {
+            if (event.data.type === 'LOGOUT') {
+                console.log('🔄 Logout event received, refreshing login page...');
+                window.location.reload();
+            }
+        });
+    }
+    
+    // Fallback: localStorage listener
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'superset-logout-event') {
+            console.log('🔄 Logout event received via localStorage, refreshing...');
+            window.location.reload();
+        }
+    });
+})();
+</script>
 {% endblock %}

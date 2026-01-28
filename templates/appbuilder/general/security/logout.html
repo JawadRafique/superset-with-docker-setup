@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Logging out...</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        .logout-container {
+            text-align: center;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 400px;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .message {
+            color: #666;
+            margin: 1rem 0;
+        }
+        .success {
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="logout-container">
+        <div class="spinner" id="spinner"></div>
+        <h3>Logging out...</h3>
+        <p class="message" id="message">Clearing session data and cache...</p>
+        <p style="font-size: 0.9em; color: #999;">Please wait while we securely log you out.</p>
+    </div>
+
+    <script>
+        (function() {
+            // Function to clear all client-side storage
+            function clearClientStorage() {
+                try {
+                    // Clear localStorage
+                    if (typeof(Storage) !== "undefined" && localStorage) {
+                        localStorage.clear();
+                        console.log('✅ localStorage cleared');
+                    }
+                    
+                    // Clear sessionStorage
+                    if (typeof(Storage) !== "undefined" && sessionStorage) {
+                        sessionStorage.clear();
+                        console.log('✅ sessionStorage cleared');
+                    }
+                    
+                    // Clear IndexedDB (if any Superset data is stored there)
+                    if (window.indexedDB) {
+                        // This is a more complex operation, but we'll do a basic clear
+                        try {
+                            indexedDB.deleteDatabase('superset');
+                            indexedDB.deleteDatabase('superset-cache');
+                            console.log('✅ IndexedDB cleared');
+                        } catch (e) {
+                            console.log('⚠️ IndexedDB clear failed (might not exist):', e);
+                        }
+                    }
+                    
+                    // Clear any cached service worker data
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                            for(let registration of registrations) {
+                                registration.unregister();
+                            }
+                            console.log('✅ Service workers unregistered');
+                        });
+                    }
+                    
+                    // Clear browser cache for this domain (where possible)
+                    if ('caches' in window) {
+                        caches.keys().then(function(names) {
+                            for (let name of names) {
+                                caches.delete(name);
+                            }
+                            console.log('✅ Cache API cleared');
+                        });
+                    }
+                    
+                } catch (error) {
+                    console.error('Error clearing client storage:', error);
+                }
+            }
+            
+            // Function to notify other tabs about logout
+            function notifyOtherTabs() {
+                try {
+                    // Use BroadcastChannel to notify other tabs
+                    if (typeof BroadcastChannel !== 'undefined') {
+                        const channel = new BroadcastChannel('superset-logout');
+                        channel.postMessage({
+                            type: 'LOGOUT',
+                            timestamp: Date.now()
+                        });
+                        console.log('✅ Notified other tabs via BroadcastChannel');
+                        setTimeout(() => channel.close(), 1000);
+                    }
+                    
+                    // Fallback: Use localStorage to communicate with other tabs
+                    localStorage.setItem('superset-logout-event', Date.now().toString());
+                    setTimeout(() => {
+                        localStorage.removeItem('superset-logout-event');
+                    }, 5000);
+                    
+                } catch (error) {
+                    console.error('Error notifying other tabs:', error);
+                }
+            }
+            
+            // Function to handle logout from other tabs
+            function setupLogoutListener() {
+                try {
+                    // Listen for BroadcastChannel messages
+                    if (typeof BroadcastChannel !== 'undefined') {
+                        const channel = new BroadcastChannel('superset-logout');
+                        channel.addEventListener('message', function(event) {
+                            if (event.data.type === 'LOGOUT') {
+                                console.log('🔄 Logout event received from another tab');
+                                window.location.href = '/login/';
+                            }
+                        });
+                    }
+                    
+                    // Listen for localStorage changes (fallback)
+                    window.addEventListener('storage', function(e) {
+                        if (e.key === 'superset-logout-event') {
+                            console.log('🔄 Logout event received via localStorage');
+                            window.location.href = '/login/';
+                        }
+                    });
+                    
+                } catch (error) {
+                    console.error('Error setting up logout listener:', error);
+                }
+            }
+            
+            // Setup listener first (for other tabs)
+            setupLogoutListener();
+            
+            // Clear client-side data
+            clearClientStorage();
+            
+            // Notify other tabs about logout
+            notifyOtherTabs();
+            
+            // Update UI
+            setTimeout(function() {
+                document.getElementById('message').innerHTML = '<span class="success">✅ Session cleared successfully</span>';
+                document.getElementById('spinner').style.display = 'none';
+            }, 1500);
+            
+            // Redirect to login after clearing everything
+            setTimeout(function() {
+                window.location.href = '/login/';
+            }, 2500);
+            
+        })();
+    </script>
+</body>
+</html>

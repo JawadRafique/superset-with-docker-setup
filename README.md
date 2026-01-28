@@ -1,19 +1,23 @@
 # Apache Superset with SAML Authentication 🚀
 
-**Version 1.0.0** - Enhanced Apache Superset setup with dual authentication support (SAML + Database) and complete enterprise integration.
+<!-- Version Management: Update version file and docker-compose.yml image tag when releasing -->
+**Current Version: 1.0.1** - Enhanced Apache Superset setup with dual authentication support (SAML + Database) and complete enterprise integration.
+
+> 📝 **Version Management**: The current version is dynamically managed through the [`version`](version) file. Update this file and corresponding Docker image tags when releasing new versions.
 
 ![Docker Pulls](https://img.shields.io/docker/pulls/jawadrafique/superset?style=flat-square)
-![Docker Image Version](https://img.shields.io/docker/v/jawadrafique/superset/latest?style=flat-square)
-![Docker Image Size](https://img.shields.io/docker/image-size/jawadrafique/superset/latest?style=flat-square)
+![Docker Image Version](https://img.shields.io/docker/v/jawadrafique/superset/1.0.1?style=flat-square)
+![Docker Image Size](https://img.shields.io/docker/image-size/jawadrafique/superset/1.0.1?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 
-## ✨ Features (v1.0.0)
+## ✨ Features (Latest Version)
 
 ### 🔐 Dual Authentication System
 - **SAML SSO Integration** with Azure AD/ADFS
 - **Database Authentication** fallback  
 - **Seamless user experience** with unified login page
 - **Enterprise-ready security** with X.509 certificates
+- **Smart Logout Management** with cache clearing and multi-tab coordination
 
 ### 🎯 Core Capabilities  
 - **Auto-initialization** with admin user creation
@@ -21,10 +25,18 @@
 - **Environment-based configuration** for easy deployment
 - **Custom Docker image** with pre-installed SAML libraries
 - **Helm chart support** for Kubernetes deployment
+- **Advanced session management** with comprehensive cache clearing
 
-## 🆕 What's New in v1.0.0
+## 🆕 What's New in v1.0.1
 
-### 🎥 SAML Authentication Demo
+### 🚪 Enhanced Logout & Session Management (v1.0.1)
+- **Smart logout options** with local vs full SAML logout
+- **Multi-tab coordination** prevents 403 Forbidden errors
+- **Comprehensive cache clearing** eliminates manual site data clearing
+- **Real-time session monitoring** across browser tabs
+- **SAML authentication fix** for Azure AD method conflicts (AADSTS75011)
+
+### 🎥 SAML Authentication Demo (v1.0.0)
 **[Watch the SAML Demo Video](https://youtu.be/eUC1EElVgTo)** - See complete SAML authentication flow with Azure AD integration!
 
 ### Production-Ready SAML Support  
@@ -46,6 +58,15 @@
 - **Configurable SAML validation** (strict/relaxed modes)
 - **Debug mode** for troubleshooting SAML issues
 - **Secure environment variable** configuration
+- **Advanced logout management** with comprehensive cache clearing
+- **Multi-tab session coordination** to prevent authentication errors
+
+### 🚪 Advanced Logout & Session Management
+- **Smart logout options** - Local logout (preserves Azure AD) or Full SAML logout
+- **Comprehensive cache clearing** - localStorage, sessionStorage, IndexedDB, cookies
+- **Multi-tab coordination** - Automatic logout across all browser tabs
+- **Session monitoring** - Prevents 403 Forbidden errors in multiple tabs
+- **Client-side cleanup** - Removes all cached authentication data
 
 ## 🚀 Quick Start
 
@@ -144,7 +165,7 @@ SAML_SP_PRIVATE_KEY="$(cat saml_sp.key | tr -d '\n')"
 ### 4. Build Custom Image
 
 ```bash
-docker build . -t superset:1.0.0
+docker build . -t superset:1.0.1
 ```
 
 ### 5. Start Superset
@@ -191,27 +212,90 @@ Check logs for SAML authentication issues:
 docker-compose logs superset | grep -i saml
 ```
 
-## 📁 Project Structure
+## � Logout & Session Management
+
+### Smart Logout Options
+
+The enhanced logout system provides two modes to handle different security requirements:
+
+#### **Local Logout (Default - Recommended)**
+```bash
+SAML_FORCE_LOCAL_LOGOUT=true  # Default setting
+```
+- **Logs out from Superset only** - preserves Azure AD session
+- **Ideal for shared workstations** - users remain logged in to Office 365, Teams, etc.
+- **Convenient re-login** - quick SAML authentication without re-entering credentials
+- **Enhanced security** - comprehensive client-side cache clearing
+
+#### **Full SAML Logout (Optional)**
+```bash
+SAML_FORCE_LOCAL_LOGOUT=false  # For high-security environments
+```
+- **Global logout** - logs out from both Superset AND Azure AD
+- **Complete session termination** - ends all SAML-connected applications
+- **Maximum security** - ensures no residual sessions
+
+### Multi-Tab Session Coordination
+
+**Problem Solved**: No more "403 Forbidden" errors when logging out with multiple Superset tabs open.
+
+**Features**:
+- **Automatic coordination** across all browser tabs
+- **Real-time notifications** using BroadcastChannel API
+- **Comprehensive cache clearing** - localStorage, sessionStorage, IndexedDB, cookies
+- **Session monitoring** - detects expired sessions and auto-redirects
+- **Fallback mechanisms** - localStorage events for older browsers
+
+**User Experience**:
+1. User logs out from any Superset tab
+2. **All other tabs automatically redirect** to login page
+3. **No manual cache clearing** required
+4. **Seamless experience** across all browser tabs
+
+### Cache & Storage Clearing
+
+The logout process comprehensively clears:
+- **Server-side**: Flask sessions, authentication cookies, SAML session data
+- **Client-side**: localStorage, sessionStorage, IndexedDB, browser cache
+- **Cross-tab**: Notifications to all open tabs via BroadcastChannel
+- **Security headers**: No-cache directives to prevent authentication caching
+
+## �📁 Project Structure
 
 ```
-├── docker-compose.yml              # Service orchestration (v1.0.0)
+├── docker-compose.yml              # Service orchestration (current version)
 ├── Dockerfile                      # Custom image with SAML + MySQL support  
 ├── entrypoint.sh                  # Auto-initialization script
 ├── superset_config.py             # Configuration with SAML integration
-├── auth_saml.py                   # Custom SAML security manager (v1.0.0)
+├── auth_saml.py                   # Custom SAML security manager (v1.0.0+)
 ├── templates/                     # Custom templates for dual authentication
 │   └── appbuilder/general/security/
-│       └── login_db.html         # Dual authentication login page
-├── helm/                          # Kubernetes deployment (v1.0.0)
-│   ├── microservice-superset.yaml # Helm template with SAML support
+│       ├── login_db.html         # Dual authentication login page
+│       └── logout.html           # Enhanced logout with cache clearing (v1.0.1+)
+├── helm/                          # Kubernetes deployment (v1.0.0+)
+├── microservice-superset.yaml # Helm template with SAML support
 │   └── values.yaml               # Configuration values
 ├── .env.example                   # Environment variables template  
 ├── .env                           # Your local configuration (git-ignored)
-├── version                        # Version 1.0.0
+├── version                        # Current Version: 1.0.1
 ├── volumes/                       # Persistent data storage
 │   └── superset/                  # Superset application data
 └── README.md                      # This documentation
 ```
+
+## 🏷️ Version Management
+
+This project uses semantic versioning managed through the [`version`](version) file:
+
+- **Current Version**: `1.0.1`
+- **Docker Image Tag**: `superset:1.0.1` (in docker-compose.yml)
+- **Release Notes**: See [What's New](#-whats-new-in-v101) sections for version history
+
+**To release a new version:**
+1. Update the [`version`](version) file
+2. Update image tag in [`docker-compose.yml`](docker-compose.yml)
+3. Update any version references in documentation
+4. Build and tag Docker image: `docker build -t superset:$(cat version) .`
 
 ## 🔧 Configuration Files
 
@@ -261,7 +345,7 @@ The enhanced entrypoint script automatically:
 
 ```bash
 # Rebuild with SAML support 
-docker build --no-cache . -t superset:1.0.0
+docker build --no-cache . -t superset:1.0.1
 docker-compose up -d
 
 # View logs with SAML debug info
@@ -280,7 +364,7 @@ Update `docker-compose.yml` with production settings:
 version: '3.8'
 services:
   superset:
-    image: superset:1.0.0
+    image: superset:1.0.1
     environment:
       - ENABLE_SAML_AUTH=true
       - SAML_SP_ENTITY_ID=https://superset.yourcompany.com  
@@ -292,7 +376,7 @@ Use the included Helm templates in the `k8s/` directory:
 
 ```bash
 helm install superset ./k8s/superset-helm \
-  --set image.tag=1.0.0 \
+  --set image.tag=1.0.1 \
   --set saml.enabled=true \
   --set saml.idpEntityId=https://sts.windows.net/your-tenant/
 ```
@@ -337,6 +421,36 @@ docker-compose logs superset | grep -i saml
 
 # Verify SAML configuration
 docker exec superset cat /app/superset_config.py | grep -A 20 "SAML"
+```
+
+### Logout & Session Issues
+
+**403 Forbidden Errors in Multiple Tabs (SOLVED):**
+- ✅ **Fixed in v1.0.1** - Enhanced logout automatically coordinates all tabs
+- ✅ **No manual cache clearing** required anymore
+- ✅ **All tabs redirect automatically** when user logs out
+
+**Logout Not Working Properly:**
+1. Check logout configuration: `SAML_FORCE_LOCAL_LOGOUT=true` (recommended)
+2. Verify browser supports BroadcastChannel (modern browsers do)
+3. Check browser console for logout coordination logs
+4. Test with different logout modes:
+   ```bash
+   # Local logout (preserves Azure AD session)
+   SAML_FORCE_LOCAL_LOGOUT=true
+   
+   # Full SAML logout (logs out from Azure AD too)
+   SAML_FORCE_LOCAL_LOGOUT=false
+   ```
+
+**Cache/Session Issues:**
+```bash
+# Check if comprehensive cache clearing is working
+# 1. Login to Superset
+# 2. Open browser DevTools > Application > Storage
+# 3. Note localStorage, sessionStorage, cookies
+# 4. Logout from Superset
+# 5. Check that all auth-related storage is cleared
 ```
 
 **User Provisioning Issues:**

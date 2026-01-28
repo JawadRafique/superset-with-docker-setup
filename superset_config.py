@@ -36,6 +36,70 @@ TALISMAN_ENABLED = False
 WTF_CSRF_ENABLED = False
 HTTP_HEADERS = {"X-Frame-Options": "ALLOWALL"}
 
+# Custom logout handling - Add JavaScript to handle multi-tab logout coordination
+EXTRA_CATEGORICAL_COLOR_SCHEMES = []
+
+# Add global JavaScript for logout coordination
+GLOBAL_ASYNC_QUERIES_ENABLED = True
+
+# Custom cache settings to prevent authentication caching issues
+SEND_FILE_MAX_AGE_DEFAULT = 60  # Cache static files for 1 minute only
+PERMANENT_SESSION_LIFETIME = 3600  # 1 hour session lifetime
+
+# Add no-cache headers for authenticated pages
+def add_no_cache_headers(response):
+    """Add no-cache headers to prevent authentication caching issues"""
+    if hasattr(response, 'headers'):
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache' 
+        response.headers['Expires'] = '0'
+    return response
+
+# Custom Jinja2 global functions
+def setup_jinja_globals(app):
+    """Setup custom Jinja2 global functions"""
+    @app.template_global()
+    def logout_script():
+        """Generate logout coordination script"""
+        return """
+<script>
+(function() {
+    // Handle logout coordination between tabs
+    if (typeof BroadcastChannel !== 'undefined') {
+        const channel = new BroadcastChannel('superset-logout');
+        channel.addEventListener('message', function(event) {
+            if (event.data.type === 'LOGOUT') {
+                window.location.href = '/login/';
+            }
+        });
+    }
+    
+    // Fallback: localStorage listener
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'superset-logout-event') {
+            window.location.href = '/login/';
+        }
+    });
+    
+    // Handle session expiry
+    setInterval(function() {
+        fetch('/api/v1/security/current_user/', {
+            credentials: 'include',
+            headers: {'X-Requested-With': 'XMLHttpRequest'}
+        }).then(function(response) {
+            if (response.status === 401 || response.status === 403) {
+                // Session expired or forbidden
+                window.location.href = '/login/';
+            }
+        }).catch(function() {
+            // Network error or other issues - check if we're still authenticated
+            // Don't redirect immediately, but check again later
+        });
+    }, 30000); // Check every 30 seconds
+})();
+</script>
+        """.strip()
+
 FEATURE_FLAGS = {
     "EMBEDDED_SUPERSET": True,
     "ENABLE_TEMPLATE_PROCESSING": True,

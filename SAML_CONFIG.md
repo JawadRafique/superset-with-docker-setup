@@ -92,6 +92,102 @@ SAML_IDP_X509_CERT=YOUR_AZURE_ADFS_CERTIFICATE
 
 #### General SAML Settings
 
+#### Security SAML Settings
+
+The SAML configuration includes comprehensive security settings with environment variable control:
+
+**Authentication Security:**
+- `requestedAuthnContext: false` - Accepts ANY authentication method from Azure AD (fixes AADSTS75011 error)
+- `wantNameId: true` - Always requires NameID for secure user identification
+
+**Signature & Encryption (Configurable):**
+```bash
+# Enhanced security options (optional environment variables)
+SAML_WANT_ASSERTIONS_SIGNED=true        # Require signed assertions (recommended for production)
+SAML_WANT_NAMEID_ENCRYPTED=false        # Encrypt NameID (optional, may cause compatibility issues)
+SAML_WANT_ASSERTIONS_ENCRYPTED=false    # Encrypt assertions (optional, may cause compatibility issues)
+SAML_SIGN_REQUESTS=false                # Sign outgoing SAML requests (optional)
+SAML_SIGN_LOGOUT=false                  # Sign logout requests/responses (optional)
+SAML_SIGN_METADATA=false                # Sign SAML metadata (optional)
+
+# Logout Behavior Control
+SAML_FORCE_LOCAL_LOGOUT=true            # Force local logout only (preserves Azure AD session)
+```
+
+**Logout Options:**
+- `SAML_FORCE_LOCAL_LOGOUT=true` (default): Logout from Superset only, keep Azure AD session
+- `SAML_FORCE_LOCAL_LOGOUT=false`: Full SAML logout (logs out from both Superset and Azure AD)
+
+## Logout & Session Management
+
+### Smart Logout Configuration
+
+The SAML integration provides intelligent logout handling to solve common multi-tab and cache issues:
+
+#### Local Logout (Recommended)
+```bash
+SAML_FORCE_LOCAL_LOGOUT=true  # Default setting
+```
+**Benefits:**
+- Logs out from Superset only (preserves Azure AD session)
+- Users remain logged in to Office 365, Teams, other Azure apps
+- Quick re-login via SAML without re-entering credentials
+- Ideal for shared workstations and productivity workflows
+
+#### Full SAML Logout
+```bash
+SAML_FORCE_LOCAL_LOGOUT=false
+```
+**Benefits:**
+- Complete logout from both Superset AND Azure AD
+- Maximum security for sensitive environments
+- Terminates all SAML-connected application sessions
+
+### Multi-Tab Coordination
+
+**Problem Solved**: Eliminates "403 Forbidden" errors when multiple Superset tabs are open and user logs out.
+
+**How it works:**
+1. User logs out from any Superset tab
+2. Logout process clears all authentication data
+3. **BroadcastChannel API** notifies all other open tabs
+4. Other tabs automatically redirect to login page
+5. **No manual cache clearing** required by users
+
+### Comprehensive Cache Clearing
+
+The logout process automatically clears:
+
+**Server-side:**
+- Flask session data (`_user_id`, `_fresh`, SAML session)
+- Authentication cookies (`session`, `remember_token`, `csrf_token`)
+- SAML-specific data (`samlUserdata`, `samlNameId`, etc.)
+
+**Client-side:**
+- `localStorage` - All stored authentication data
+- `sessionStorage` - Temporary session data
+- `IndexedDB` - Any cached Superset data
+- `Browser Cache` - Cached authentication responses
+- `Service Workers` - Unregistered to prevent cached auth
+
+**Cross-tab Communication:**
+- `BroadcastChannel` - Real-time tab coordination
+- `localStorage events` - Fallback for older browsers
+- Cache control headers - Prevents authentication caching
+
+**Attack Prevention:**
+- `rejectUnsolicitedResponsesWithInResponseTo: true` - Prevents SAML replay attacks
+- `allowRepeatAttributeName: false` - Prevents attribute injection attacks
+- `wantXMLValidation: true` - Validates XML structure against attacks
+- `clockSkew: 30` - 30-second tolerance for server time differences
+
+**Security Recommendations:**
+1. **Production**: Set `SAML_WANT_ASSERTIONS_SIGNED=true` for signed assertions
+2. **Network**: Always use HTTPS in production (required for SAML)
+3. **Certificates**: Keep Azure AD and SP certificates updated
+4. **Monitoring**: Enable SAML debug logging to monitor authentication attempts
+5. **Testing**: Test security settings in staging before production deployment
+
 ```bash
 # SAML Settings
 SAML_STRICT=true
@@ -172,6 +268,11 @@ AUTH_USER_REGISTRATION_ROLE = "Gamma"  # Change to "Alpha" or "Admin" if needed
 1. **Certificate Issues**: Ensure the certificate is copied correctly without headers and line breaks
 2. **URL Mismatches**: Verify all URLs in Azure and saml_settings.json match exactly
 3. **Attribute Mapping**: Check Azure AD user attributes if user creation fails
+4. **Authentication Method Mismatch (AADSTS75011)**:
+   - **Error**: "Authentication method 'X509, MultiFactor, X509Device' by which the user authenticated with the service doesn't match requested authentication method 'Password, ProtectedTransport'"
+   - **Cause**: Users with existing Azure sessions (MFA, FIDO keys) conflict with Superset's default authentication method requirements
+   - **Solution**: The `requestedAuthnContext: false` setting is now automatically included in the SAML security configuration to accept any authentication method from Azure AD
+   - **Test**: Try logging in with a normal browser (not incognito) after deploying the updated configuration
 
 ### Debug Mode
 
