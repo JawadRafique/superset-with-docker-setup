@@ -6,8 +6,8 @@
 > 📝 **Version Management**: The current version is dynamically managed through the [`version`](version) file. Update this file and corresponding Docker image tags when releasing new versions.
 
 ![Docker Pulls](https://img.shields.io/docker/pulls/jawadrafique/superset?style=flat-square)
-![Docker Image Version](https://img.shields.io/docker/v/jawadrafique/superset/1.0.1?style=flat-square)
-![Docker Image Size](https://img.shields.io/docker/image-size/jawadrafique/superset/1.0.1?style=flat-square)
+![Docker Image Version](https://img.shields.io/docker/v/jawadrafique/superset/latest?style=flat-square)
+![Docker Image Size](https://img.shields.io/docker/image-size/jawadrafique/superset/latest?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 
 ## ✨ Features (Latest Version)
